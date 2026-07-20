@@ -3000,31 +3000,550 @@ function QueuesPage() {
 }
 
 /* ---- Leads ---- */
+/* ============================================================
+   LEAD & RECORD MANAGEMENT — full functional module
+   ============================================================ */
+
+/* ---- Seed data ---- */
+const LEAD_SOURCES = ["CarWale", "CarDekho", "Website", "WhatsApp", "IndiaMART", "Walk-in"];
+const LEAD_PROC_STATES = ["success", "partial", "failed", "duplicate"];
+const LEAD_STATUSES = ["New", "Assigned", "Contacted", "Converted", "Lost"];
+const LEAD_TENANTS = ["MedLinks", "Varun Group", "Derma Purtitys", "Urban Autohub", "Rezoni", "BrightPath Edu"];
+
+const SEED_LEADS = [
+  { id: "ld-001", name: "Arjun Sharma", phone: "+91-98765-43210", email: "arjun@example.com", source: "CarWale", tenant: "Varun Group", tenantId: 6, status: "New", procState: "success", duplicateOf: null, aiSummary: "High-intent buyer, interested in SUVs under ₹15L. Visited 3 times.", assignee: "Saif Sir", receivedAt: "13 May 2026 09:14", failureReason: null, history: [{ action: "Lead received", by: "system", when: "13 May 2026 09:14" }, { action: "AI summary generated", by: "system", when: "13 May 2026 09:15" }] },
+  { id: "ld-002", name: "Priya Nair", phone: "+91-87654-32109", email: "priya@example.com", source: "CarDekho", tenant: "Urban Autohub", tenantId: 11, status: "Assigned", procState: "success", duplicateOf: null, aiSummary: "First-time buyer, exploring hatchbacks. Budget ₹8–10L.", assignee: "Luv", receivedAt: "13 May 2026 08:52", failureReason: null, history: [{ action: "Lead received", by: "system", when: "13 May 2026 08:52" }, { action: "Assigned to Luv", by: "Saif Sir", when: "13 May 2026 09:00" }] },
+  { id: "ld-003", name: "Rohit Verma", phone: "+91-76543-21098", email: "rohit@example.com", source: "IndiaMART", tenant: "MedLinks", tenantId: 3, status: "New", procState: "failed", duplicateOf: null, aiSummary: null, assignee: null, receivedAt: "13 May 2026 08:30", failureReason: "Auth error: IndiaMART API token expired", history: [{ action: "Lead received", by: "system", when: "13 May 2026 08:30" }, { action: "Processing failed: Auth error", by: "system", when: "13 May 2026 08:30" }] },
+  { id: "ld-004", name: "Kavita Reddy", phone: "+91-65432-10987", email: "kavita@example.com", source: "IndiaMART", tenant: "MedLinks", tenantId: 3, status: "New", procState: "failed", duplicateOf: null, aiSummary: null, assignee: null, receivedAt: "13 May 2026 08:28", failureReason: "Auth error: IndiaMART API token expired", history: [{ action: "Lead received", by: "system", when: "13 May 2026 08:28" }, { action: "Processing failed: Auth error", by: "system", when: "13 May 2026 08:28" }] },
+  { id: "ld-005", name: "Suresh Patel", phone: "+91-54321-09876", email: "suresh@example.com", source: "WhatsApp", tenant: "Derma Purtitys", tenantId: 2, status: "Contacted", procState: "success", duplicateOf: null, aiSummary: "Returning patient, interested in skin rejuvenation. Has booked before.", assignee: "Luv", receivedAt: "13 May 2026 07:45", failureReason: null, history: [{ action: "Lead received", by: "system", when: "13 May 2026 07:45" }, { action: "Contacted via WhatsApp", by: "Luv", when: "13 May 2026 08:00" }] },
+  { id: "ld-006", name: "Meera Iyer", phone: "+91-43210-98765", email: "meera@example.com", source: "Website", tenant: "Derma Purtitys", tenantId: 2, status: "New", procState: "duplicate", duplicateOf: "ld-005", aiSummary: "Phone matches existing lead ld-005 (Suresh Patel via WhatsApp).", assignee: null, receivedAt: "13 May 2026 07:40", failureReason: null, history: [{ action: "Lead received", by: "system", when: "13 May 2026 07:40" }, { action: "Duplicate detected: phone match with ld-005", by: "system", when: "13 May 2026 07:41" }] },
+  { id: "ld-007", name: "Vikram Singh", phone: "+91-32109-87654", email: "vikram@example.com", source: "CarWale", tenant: "Varun Group", tenantId: 6, status: "Converted", procState: "success", duplicateOf: null, aiSummary: "Converted after 3 follow-ups. Booked Hyundai Creta.", assignee: "Saif Sir", receivedAt: "12 May 2026 16:20", failureReason: null, history: [{ action: "Lead received", by: "system", when: "12 May 2026 16:20" }, { action: "Converted", by: "Saif Sir", when: "13 May 2026 11:00" }] },
+  { id: "ld-008", name: "Anita Joshi", phone: "+91-21098-76543", email: "anita@example.com", source: "Website", tenant: "MedLinks", tenantId: 3, status: "New", procState: "partial", duplicateOf: null, aiSummary: "Lead captured but AI enrichment incomplete — contact details valid.", assignee: null, receivedAt: "12 May 2026 15:55", failureReason: "AI enrichment timeout", history: [{ action: "Lead received", by: "system", when: "12 May 2026 15:55" }, { action: "Partial processing: AI enrichment timeout", by: "system", when: "12 May 2026 15:56" }] },
+  { id: "ld-009", name: "Deepak Rao", phone: "+91-10987-65432", email: "deepak@example.com", source: "CarDekho", tenant: "Urban Autohub", tenantId: 11, status: "Assigned", procState: "success", duplicateOf: null, aiSummary: "Looking for family car, 7-seater preferred. Deadline: next month.", assignee: "Luv", receivedAt: "12 May 2026 14:30", failureReason: null, history: [{ action: "Lead received", by: "system", when: "12 May 2026 14:30" }] },
+  { id: "ld-010", name: "Sunita Kapoor", phone: "+91-09876-54321", email: "sunita@example.com", source: "Walk-in", tenant: "Rezoni", tenantId: 1, status: "Lost", procState: "success", duplicateOf: null, aiSummary: "Walk-in visitor. Browsed but didn't proceed. Price sensitive.", assignee: "Saif Sir", receivedAt: "12 May 2026 12:10", failureReason: null, history: [{ action: "Lead received", by: "system", when: "12 May 2026 12:10" }, { action: "Marked Lost", by: "Saif Sir", when: "12 May 2026 17:00" }] },
+  { id: "ld-011", name: "Rahul Mehta", phone: "+91-98001-23456", email: "rahul@example.com", source: "IndiaMART", tenant: "BrightPath Edu", tenantId: 8, status: "New", procState: "failed", duplicateOf: null, aiSummary: null, assignee: null, receivedAt: "12 May 2026 11:40", failureReason: "Auth error: IndiaMART API token expired", history: [{ action: "Lead received", by: "system", when: "12 May 2026 11:40" }, { action: "Processing failed", by: "system", when: "12 May 2026 11:40" }] },
+  { id: "ld-012", name: "Pooja Sharma", phone: "+91-87001-23456", email: "pooja@example.com", source: "WhatsApp", tenant: "Varun Group", tenantId: 6, status: "Contacted", procState: "success", duplicateOf: null, aiSummary: "Interested in commercial vehicles. Fleet buyer potential.", assignee: "Saif Sir", receivedAt: "12 May 2026 10:05", failureReason: null, history: [{ action: "Lead received", by: "system", when: "12 May 2026 10:05" }] },
+  { id: "ld-013", name: "Anil Kumar", phone: "+91-76001-23456", email: "anil@example.com", source: "CarWale", tenant: "Urban Autohub", tenantId: 11, status: "New", procState: "duplicate", duplicateOf: "ld-009", aiSummary: "Phone match with ld-009 (Deepak Rao via CarDekho).", assignee: null, receivedAt: "11 May 2026 18:30", failureReason: null, history: [{ action: "Lead received", by: "system", when: "11 May 2026 18:30" }, { action: "Duplicate detected", by: "system", when: "11 May 2026 18:31" }] },
+  { id: "ld-014", name: "Geeta Singh", phone: "+91-65001-23456", email: "geeta@example.com", source: "Website", tenant: "Derma Purtitys", tenantId: 2, status: "New", procState: "partial", duplicateOf: null, aiSummary: null, assignee: null, receivedAt: "11 May 2026 16:00", failureReason: "AI enrichment timeout", history: [{ action: "Lead received", by: "system", when: "11 May 2026 16:00" }] },
+  { id: "ld-015", name: "Sunil Desai", phone: "+91-54001-23456", email: "sunil@example.com", source: "CarDekho", tenant: "Varun Group", tenantId: 6, status: "Assigned", procState: "success", duplicateOf: null, aiSummary: "Budget buyer. Comparing 3 models. High follow-up priority.", assignee: "Saif Sir", receivedAt: "11 May 2026 14:22", failureReason: null, history: [{ action: "Lead received", by: "system", when: "11 May 2026 14:22" }] },
+];
+
+const LEAD_SOURCES_DATA = [
+  { source: "CarWale", count: 18420, convPct: 4.2, costPerLead: 48 },
+  { source: "CarDekho", count: 14100, convPct: 3.8, costPerLead: 52 },
+  { source: "Website", count: 8900, convPct: 6.1, costPerLead: 18 },
+  { source: "WhatsApp", count: 4200, convPct: 8.4, costPerLead: 5 },
+  { source: "IndiaMART", count: 2100, convPct: 2.9, costPerLead: 35 },
+  { source: "Walk-in", count: 2590, convPct: 12.1, costPerLead: 0 },
+];
+
+const LEADS_STORAGE_KEY = "ledsak_leads_v1";
+const LEADS_AUDIT_KEY = "ledsak_leads_audit_v1";
+const PII_GRANTS_KEY = "ledsak_pii_grants_v1";
+
+const loadLeads = () => { try { const s = localStorage.getItem(LEADS_STORAGE_KEY); return s ? JSON.parse(s) : null; } catch { return null; } };
+const saveLeads = (d) => { try { localStorage.setItem(LEADS_STORAGE_KEY, JSON.stringify(d)); } catch {} };
+const loadLeadAudit = () => { try { const s = localStorage.getItem(LEADS_AUDIT_KEY); return s ? JSON.parse(s) : []; } catch { return []; } };
+const saveLeadAudit = (d) => { try { localStorage.setItem(LEADS_AUDIT_KEY, JSON.stringify(d)); } catch {} };
+const loadPIIGrants = () => { try { const s = localStorage.getItem(PII_GRANTS_KEY); return s ? JSON.parse(s) : []; } catch { return []; } };
+const savePIIGrants = (d) => { try { localStorage.setItem(PII_GRANTS_KEY, JSON.stringify(d)); } catch {} };
+
+/* ---- PII Access Request Modal ---- */
+function PIIAccessModal({ open, onClose, onGranted, leadId }) {
+  const [justification, setJustification] = useState("");
+  const [submitted, setSubmitted] = useState(false);
+  if (!open) return null;
+  const handleSubmit = () => {
+    if (!justification.trim()) return;
+    const grant = { id: "pii-" + Date.now(), requestedBy: ADMIN, justification, leadId: leadId || "all", grantedAt: new Date().toLocaleString("en-IN"), expiresAt: new Date(Date.now() + 4 * 60 * 60 * 1000).toLocaleString("en-IN"), status: "approved" };
+    const existing = loadPIIGrants();
+    savePIIGrants([grant, ...existing]);
+    const audit = loadLeadAudit();
+    saveLeadAudit([{ id: "audit-" + Date.now(), action: `PII access granted for ${leadId || "all leads"}`, by: ADMIN, justification, when: grant.grantedAt, type: "PII Access" }, ...audit]);
+    setSubmitted(true);
+    setTimeout(() => { setSubmitted(false); setJustification(""); onGranted(grant); onClose(); }, 1200);
+  };
+  return (
+    <Modal open={open} onClose={onClose} title="Request PII Access"
+      footer={!submitted && <><Button onClick={onClose}>Cancel</Button><Button variant="primary" disabled={!justification.trim()} onClick={handleSubmit}>Submit Request</Button></>}>
+      {submitted ? (
+        <div className="text-center py-4"><CheckCircle2 size={36} style={{ color: T.success }} className="mx-auto mb-2" /><p className="font-semibold" style={{ color: T.text }}>Access Granted (4 hours)</p><p className="text-[13px] mt-1" style={{ color: T.text2 }}>Logged to audit trail.</p></div>
+      ) : (
+        <div className="space-y-3">
+          <p className="text-[13px]" style={{ color: T.text2 }}>PII access is gated and time-boxed to 4 hours. Your justification will be written to the audit log.</p>
+          <div>
+            <label className="block text-[11px] font-semibold uppercase tracking-wider mb-1.5" style={{ color: T.text3 }}>Business Justification <span style={{ color: T.danger }}>*</span></label>
+            <textarea value={justification} onChange={(e) => setJustification(e.target.value)} rows={3} placeholder="e.g. Investigating duplicate merge for Varun Group — support case TKT-812"
+              className="w-full border rounded-lg px-3 py-2 text-[13px] outline-none resize-none" style={{ borderColor: T.border }} />
+          </div>
+          <div className="rounded-lg px-3 py-2 text-[12px] flex items-start gap-2" style={{ background: T.warningSoft, color: "#92400E" }}>
+            <AlertTriangle size={14} className="shrink-0 mt-0.5" /> Access is time-boxed (4h), role-checked, and logged. Unauthorized access triggers a security alert.
+          </div>
+        </div>
+      )}
+    </Modal>
+  );
+}
+
+/* ---- Duplicate Review Modal ---- */
+function DuplicateReviewModal({ open, onClose, lead, leads, onMerge, onDismiss }) {
+  if (!open || !lead) return null;
+  const original = leads.find((l) => l.id === lead.duplicateOf);
+  return (
+    <Modal open={open} onClose={onClose} title="Review Duplicate Lead"
+      footer={<><Button onClick={() => onDismiss(lead.id)}>Dismiss (keep both)</Button><Button variant="primary" onClick={() => onMerge(lead.id, lead.duplicateOf)}>Merge into original</Button></>}>
+      <div className="space-y-3">
+        <p className="text-[13px]" style={{ color: T.text2 }}>A phone number match was detected. Review both records and choose to merge or keep separately.</p>
+        {[{ label: "This lead (duplicate)", rec: lead }, { label: "Original lead", rec: original }].map(({ label, rec }) => rec && (
+          <div key={rec.id} className="rounded-xl border p-3 space-y-1" style={{ borderColor: T.border }}>
+            <div className="text-[11px] font-semibold uppercase tracking-wider mb-2" style={{ color: T.text3 }}>{label}</div>
+            <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-[13px]">
+              <span style={{ color: T.text3 }}>ID</span><span style={{ color: T.text }}>{rec.id}</span>
+              <span style={{ color: T.text3 }}>Source</span><span style={{ color: T.text }}>{rec.source}</span>
+              <span style={{ color: T.text3 }}>Tenant</span><span style={{ color: T.text }}>{rec.tenant}</span>
+              <span style={{ color: T.text3 }}>Received</span><span style={{ color: T.text }}>{rec.receivedAt}</span>
+              <span style={{ color: T.text3 }}>Status</span><span style={{ color: T.text }}>{rec.status}</span>
+            </div>
+          </div>
+        ))}
+        <p className="text-[12px]" style={{ color: T.text3 }}>Merging will mark this lead as resolved and log the action to the audit trail.</p>
+      </div>
+    </Modal>
+  );
+}
+
+/* ---- Lead Detail Drawer ---- */
+function LeadDetailDrawer({ lead, leads, open, onClose, piiGranted, onRequestPII, onReprocess, onStatusChange, onAssign }) {
+  const [histTab, setHistTab] = useState("details");
+  if (!open || !lead) return null;
+  const masked = !piiGranted;
+  const mask = (v) => masked ? "••••••••" : v;
+  const procColor = { success: T.success, partial: T.warning, failed: T.danger, duplicate: T.purple };
+  const duplicate = leads.find((l) => l.id === lead.duplicateOf);
+  return (
+    <Drawer open={open} onClose={onClose} width={540}>
+      <div className="sticky top-0 bg-white border-b z-10 px-6 pt-5 pb-4 flex items-start justify-between" style={{ borderColor: T.border }}>
+        <div className="flex items-center gap-3">
+          <Avatar name={lead.name} tone="brand" size={40} />
+          <div>
+            <div className="text-[15px] font-semibold" style={{ color: T.text }}>{masked ? "•••• •••••" : lead.name}</div>
+            <div className="flex items-center gap-2 mt-0.5">
+              <Badge tone={{ success: "success", partial: "warning", failed: "danger", duplicate: "purple" }[lead.procState]}>{lead.procState}</Badge>
+              <span className="text-[12px]" style={{ color: T.text3 }}>{lead.id}</span>
+            </div>
+          </div>
+        </div>
+        <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-slate-100"><X size={18} style={{ color: T.text3 }} /></button>
+      </div>
+      <div className="px-6 py-5 space-y-4">
+        <Tabs tabs={["details", "history"]} value={histTab} onChange={setHistTab} />
+        {histTab === "details" && (
+          <div className="space-y-4">
+            {masked && (
+              <div className="rounded-lg border px-4 py-3 flex items-center justify-between" style={{ borderColor: T.border, background: T.warningSoft }}>
+                <div className="text-[12px]" style={{ color: "#92400E" }}><Lock size={13} className="inline mr-1" />PII masked — request access to view contact details</div>
+                <button onClick={onRequestPII} className="text-[12px] font-semibold hover:underline" style={{ color: T.primary }}>Request access</button>
+              </div>
+            )}
+            <div className="grid grid-cols-2 gap-3">
+              {[["Phone", mask(lead.phone)], ["Email", mask(lead.email)], ["Source", lead.source], ["Tenant", lead.tenant], ["Received", lead.receivedAt], ["Assignee", lead.assignee || "Unassigned"]].map(([k, v]) => (
+                <div key={k}>
+                  <div className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: T.text3 }}>{k}</div>
+                  <div className="text-[13px] mt-0.5" style={{ color: T.text }}>{v}</div>
+                </div>
+              ))}
+            </div>
+            <div>
+              <div className="text-[11px] font-semibold uppercase tracking-wider mb-1.5" style={{ color: T.text3 }}>Status</div>
+              <select value={lead.status} onChange={(e) => onStatusChange(lead.id, e.target.value)} className="border rounded-lg px-3 py-1.5 text-[13px] outline-none" style={{ borderColor: T.border }}>
+                {LEAD_STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
+              </select>
+            </div>
+            <div>
+              <div className="text-[11px] font-semibold uppercase tracking-wider mb-1.5" style={{ color: T.text3 }}>Assign to</div>
+              <select value={lead.assignee || ""} onChange={(e) => onAssign(lead.id, e.target.value)} className="border rounded-lg px-3 py-1.5 text-[13px] outline-none" style={{ borderColor: T.border }}>
+                <option value="">Unassigned</option>
+                {ONBOARD_OWNERS.map((o) => <option key={o} value={o}>{o}</option>)}
+              </select>
+            </div>
+            {lead.aiSummary && (
+              <div className="rounded-xl p-4" style={{ background: T.primarySoft, border: `1px solid ${T.border}` }}>
+                <div className="flex items-center gap-1.5 mb-2 text-[11px] font-semibold uppercase tracking-wider" style={{ color: T.accentText }}><Sparkles size={12} />AI Summary</div>
+                <p className="text-[13px]" style={{ color: T.text }}>{lead.aiSummary}</p>
+              </div>
+            )}
+            {lead.procState === "failed" && (
+              <div className="rounded-xl p-4" style={{ background: T.dangerSoft, border: `1px solid #F3C6C6` }}>
+                <div className="text-[11px] font-semibold uppercase tracking-wider mb-1" style={{ color: T.danger }}>Failure Reason</div>
+                <p className="text-[13px] mb-3" style={{ color: T.text }}>{lead.failureReason}</p>
+                <Button size="sm" variant="danger" onClick={() => onReprocess([lead.id])}><RefreshCw size={13} />Reprocess this lead</Button>
+              </div>
+            )}
+            {lead.procState === "duplicate" && duplicate && (
+              <div className="rounded-xl p-4" style={{ background: T.purpleSoft, border: `1px solid #C4B5FD` }}>
+                <div className="text-[11px] font-semibold uppercase tracking-wider mb-1" style={{ color: T.purple }}>Duplicate Match</div>
+                <p className="text-[13px]" style={{ color: T.text }}>Phone match with <strong>{duplicate.name !== lead.name ? mask(duplicate.name) : duplicate.id}</strong> ({duplicate.source} → {duplicate.tenant})</p>
+              </div>
+            )}
+          </div>
+        )}
+        {histTab === "history" && (
+          <div className="space-y-2">
+            {lead.history.map((h, i) => (
+              <div key={i} className="flex gap-3 py-2.5 border-b last:border-0" style={{ borderColor: T.border }}>
+                <div className="w-6 h-6 rounded-full flex items-center justify-center shrink-0 text-[10px]" style={{ background: T.primarySoft, color: T.accentText }}>{h.by.charAt(0).toUpperCase()}</div>
+                <div><div className="text-[13px]" style={{ color: T.text }}>{h.action}</div><div className="text-[11px] mt-0.5" style={{ color: T.text3 }}>{h.by} · {h.when}</div></div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </Drawer>
+  );
+}
+
+/* ---- Main LeadsPage ---- */
 function LeadsPage() {
   const store = useStore();
+  const [leads, setLeadsRaw] = useState(() => loadLeads() || SEED_LEADS);
+  const [audit, setAudit] = useState(() => loadLeadAudit());
+  const [piiGrants, setPIIGrants] = useState(() => loadPIIGrants());
+  const [refreshTick, setRefreshTick] = useState(0);
+
+  const setLeads = useCallback((updater) => {
+    setLeadsRaw((prev) => {
+      const next = typeof updater === "function" ? updater(prev) : updater;
+      saveLeads(next);
+      return next;
+    });
+  }, []);
+
+  const addAudit = useCallback((entry) => {
+    setAudit((prev) => {
+      const next = [{ id: "audit-" + Date.now(), when: new Date().toLocaleString("en-IN"), ...entry }, ...prev];
+      saveLeadAudit(next);
+      return next;
+    });
+  }, []);
+
+  // Auto-refresh every 30s (simulated)
+  React.useEffect(() => {
+    const t = setInterval(() => setRefreshTick((n) => n + 1), 30000);
+    return () => clearInterval(t);
+  }, []);
+
+  // Filters
+  const [search, setSearch] = useState("");
+  const [filterSource, setFilterSource] = useState("All");
+  const [filterTenant, setFilterTenant] = useState("All");
+  const [filterState, setFilterState] = useState("All"); // proc state
+  const [filterStatus, setFilterStatus] = useState("All");
+
+  // UI state
+  const [detailLead, setDetailLead] = useState(null);
+  const [piiModal, setPIIModal] = useState(false);
+  const [piiLeadId, setPIILeadId] = useState(null);
+  const [reprocessConfirm, setReprocessConfirm] = useState(null); // { ids: [] }
+  const [dupModal, setDupModal] = useState(null); // lead
+  const [reprocessing, setReprocessing] = useState(false);
+
+  // Check if current user has active PII grant
+  const now = Date.now();
+  const activePIIGrant = piiGrants.find((g) => g.status === "approved" && new Date(g.grantedAt).getTime() + 4 * 60 * 60 * 1000 > now);
+  const piiGranted = !!activePIIGrant;
+
+  // Derived metrics
+  const failedLeads = leads.filter((l) => l.procState === "failed");
+  const dupLeads = leads.filter((l) => l.procState === "duplicate");
+  const partialLeads = leads.filter((l) => l.procState === "partial");
+  const successLeads = leads.filter((l) => l.procState === "success");
+  const aiSummarized = leads.filter((l) => l.aiSummary);
+
+  // Filtered table rows
+  const filtered = leads.filter((l) => {
+    if (search && !l.name.toLowerCase().includes(search.toLowerCase()) && !l.tenant.toLowerCase().includes(search.toLowerCase()) && !l.id.toLowerCase().includes(search.toLowerCase())) return false;
+    if (filterSource !== "All" && l.source !== filterSource) return false;
+    if (filterTenant !== "All" && l.tenant !== filterTenant) return false;
+    if (filterState !== "All" && l.procState !== filterState) return false;
+    if (filterStatus !== "All" && l.status !== filterStatus) return false;
+    return true;
+  });
+
+  const { pageRows, page, setPage, perPage, setPerPage, totalPages, total } = usePagination(filtered, 10);
+
+  // Tile click → filter
+  const setTileFilter = (state) => {
+    setFilterState((cur) => cur === state ? "All" : state);
+    setPage(1);
+  };
+
+  // Reprocess
+  const triggerReprocess = (ids) => {
+    setReprocessConfirm({ ids });
+  };
+
+  const doReprocess = () => {
+    const ids = reprocessConfirm.ids;
+    setReprocessConfirm(null);
+    setReprocessing(true);
+    setTimeout(() => {
+      setLeads((prev) => prev.map((l) => {
+        if (!ids.includes(l.id)) return l;
+        const newEntry = { action: "Reprocessed successfully", by: ADMIN, when: new Date().toLocaleString("en-IN") };
+        return { ...l, procState: "success", failureReason: null, aiSummary: "Lead recovered via manual reprocess. Contact details valid.", history: [...l.history, newEntry] };
+      }));
+      addAudit({ action: `Reprocessed ${ids.length} failed lead(s)`, by: ADMIN, type: "Reprocess", ids });
+      store.notify(`${ids.length} lead(s) reprocessed successfully`);
+      setReprocessing(false);
+    }, 1800);
+  };
+
+  // Export
+  const handleExport = () => {
+    const rows = filtered.map((l) => ({
+      id: l.id, source: l.source, tenant: l.tenant, status: l.status, procState: l.procState,
+      name: piiGranted ? l.name : "[MASKED]",
+      phone: piiGranted ? l.phone : "[MASKED]",
+      email: piiGranted ? l.email : "[MASKED]",
+      receivedAt: l.receivedAt, assignee: l.assignee || "",
+    }));
+    const header = Object.keys(rows[0]).join(",");
+    const csv = [header, ...rows.map((r) => Object.values(r).map((v) => `"${v}"`).join(","))].join("\n");
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a"); a.href = url; a.download = `leads-export-${Date.now()}.csv`; a.click();
+    addAudit({ action: `Exported ${rows.length} leads (PII ${piiGranted ? "included" : "masked"})`, by: ADMIN, type: "Export" });
+    store.notify(`${rows.length} leads exported${piiGranted ? "" : " (PII masked)"}`);
+  };
+
+  // Merge / dismiss duplicates
+  const handleMerge = (dupId, originalId) => {
+    setLeads((prev) => prev.map((l) => {
+      if (l.id !== dupId) return l;
+      return { ...l, procState: "success", duplicateOf: null, status: "Lost", history: [...l.history, { action: `Merged into ${originalId}`, by: ADMIN, when: new Date().toLocaleString("en-IN") }] };
+    }));
+    addAudit({ action: `Merged duplicate ${dupId} into ${originalId}`, by: ADMIN, type: "Duplicate Merge" });
+    store.notify("Duplicate merged");
+    setDupModal(null);
+    if (detailLead?.id === dupId) setDetailLead(null);
+  };
+
+  const handleDismiss = (dupId) => {
+    setLeads((prev) => prev.map((l) => {
+      if (l.id !== dupId) return l;
+      return { ...l, procState: "success", duplicateOf: null, history: [...l.history, { action: "Duplicate dismissed — kept as separate lead", by: ADMIN, when: new Date().toLocaleString("en-IN") }] };
+    }));
+    addAudit({ action: `Dismissed duplicate ${dupId} (kept separate)`, by: ADMIN, type: "Duplicate Dismiss" });
+    store.notify("Duplicate dismissed");
+    setDupModal(null);
+  };
+
+  const handleStatusChange = (id, status) => {
+    setLeads((prev) => prev.map((l) => l.id !== id ? l : { ...l, status, history: [...l.history, { action: `Status changed to ${status}`, by: ADMIN, when: new Date().toLocaleString("en-IN") }] }));
+    addAudit({ action: `Lead ${id} status → ${status}`, by: ADMIN, type: "Status Change" });
+  };
+
+  const handleAssign = (id, assignee) => {
+    setLeads((prev) => prev.map((l) => l.id !== id ? l : { ...l, assignee, history: [...l.history, { action: `Assigned to ${assignee || "Unassigned"}`, by: ADMIN, when: new Date().toLocaleString("en-IN") }] }));
+    addAudit({ action: `Lead ${id} assigned to ${assignee || "nobody"}`, by: ADMIN, type: "Assignment" });
+    store.notify("Assigned");
+  };
+
+  const handlePIIGranted = (grant) => {
+    setPIIGrants((prev) => { const next = [grant, ...prev]; savePIIGrants(next); return next; });
+  };
+
+  const procTone = { success: "success", partial: "warning", failed: "danger", duplicate: "purple" };
+  const statusTone = { New: "gray", Assigned: "info", Contacted: "warning", Converted: "success", Lost: "danger" };
+
+  const sourceMax = Math.max(...LEAD_SOURCES_DATA.map((s) => s.count));
+
   return (
     <>
-      <PageHeader title="Lead & Record Management" desc="Platform-wide lead volumes, sources and retention" actions={<Button onClick={() => store.notify("Leads exported")}><Download size={15} /> Export</Button>} />
+      <PageHeader title="Lead & Record Management" desc="Cross-tenant lead observability — sources, processing health, deduplication"
+        actions={<>
+          {reprocessing && <span className="text-[12px] flex items-center gap-1.5" style={{ color: T.warning }}><RefreshCw size={13} className="animate-spin" />Reprocessing…</span>}
+          {failedLeads.length > 0 && (
+            <Button onClick={() => triggerReprocess(failedLeads.map((l) => l.id))} style={{ borderColor: "#F3C6C6", color: T.danger }}>
+              <RefreshCw size={14} />Reprocess failed ({failedLeads.length})
+            </Button>
+          )}
+          <Button onClick={handleExport}><Download size={14} />Export {filtered.length > 0 ? `(${filtered.length})` : ""}</Button>
+          <button onClick={() => setRefreshTick((n) => n + 1)} className="p-2 rounded-lg border hover:bg-slate-50" title="Refresh" style={{ borderColor: T.border }}><RefreshCw size={14} style={{ color: T.text3 }} /></button>
+        </>} />
+
+      {/* KPI tiles — clickable to filter */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
-        <Kpi label="Total Leads (LTD)" value={fmtK(STATS.leads)} sub="all tenants" trend="pos" />
-        <Kpi label="Leads (30d)" value="48,210" sub="+12% MoM" trend="pos" />
-        <Kpi label="Avg per Tenant" value="1,541" sub="active" />
-        <Kpi label="Duplicate Rate" value="3.4%" sub="auto-merged" trend="pos" />
+        {[
+          { label: "Leads (24h)", value: String(leads.filter((l) => l.receivedAt.includes("13 May")).length), sub: "+8 vs yesterday", trend: "pos", filter: null },
+          { label: "AI Summarized", value: `${aiSummarized.length}/${leads.length}`, sub: `${Math.round(aiSummarized.length / leads.length * 100)}% enriched`, trend: "pos", filter: null },
+          { label: "Failed Processing", value: String(failedLeads.length), sub: "click to filter", trend: failedLeads.length > 0 ? "neg" : "pos", filter: "failed" },
+          { label: "Duplicates", value: String(dupLeads.length), sub: "awaiting review", trend: dupLeads.length > 0 ? "warn" : "pos", filter: "duplicate" },
+        ].map(({ label, value, sub, trend, filter }) => (
+          <div key={label} onClick={filter ? () => setTileFilter(filter) : undefined}
+            className={cx("rounded-lg border bg-white transition-all hover:-translate-y-0.5", filter && "cursor-pointer")}
+            style={{ borderColor: filterState === filter && filter ? T.primary : T.border, boxShadow: filterState === filter && filter ? `0 0 0 2px ${T.primarySoft}` : "0 1px 2px rgba(26,31,54,.05)", padding: "20px 22px" }}>
+            <div className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: T.text3 }}>{label}{filter && filterState === filter ? " ✕" : ""}</div>
+            <div className="text-[26px] leading-none font-semibold mt-3 tracking-tight" style={{ color: T.text }}>{value}</div>
+            {sub && <div className="text-xs mt-2.5 flex items-center gap-1" style={{ color: trend === "pos" ? T.success : trend === "neg" ? T.danger : trend === "warn" ? T.warning : T.text2 }}>{sub}</div>}
+          </div>
+        ))}
       </div>
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <Card><CardHeader title="Leads by Source" /><CardBody>
-          <BarList max={22000} fmt={(v) => v.toLocaleString("en-IN")} rows={[
-            { label: "CarWale", value: 18420, color: T.primary }, { label: "CarDekho", value: 14100, color: T.primary },
-            { label: "Website forms", value: 8900, color: T.purple }, { label: "WhatsApp", value: 4200, color: T.success }, { label: "Walk-in", value: 2590, color: T.text3 },
-          ]} /></CardBody></Card>
-        <Card><CardHeader title="Retention Policies" /><CardBody className="space-y-2.5">
-          {[["Lead records", "90d after churn"], ["Patient records", "7 years (statutory)"], ["Invoices", "8 years (GST)"], ["Comm logs", "2 years"], ["Audit logs", "7 years"]].map((r, i) => (
-            <div key={i} className="flex items-center justify-between py-2 border-b last:border-0" style={{ borderColor: T.border }}>
-              <span className="text-[13px]" style={{ color: T.text }}>{r[0]}</span><span className="text-xs" style={{ color: T.text2 }}>{r[1]}</span>
+
+      {/* Processing status + Source table row */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
+        {/* Processing status breakdown */}
+        <Card>
+          <CardHeader title="Processing Status" sub="Last 1,000 leads · click to filter" />
+          <CardBody className="space-y-2">
+            {[
+              { label: "Successful", count: successLeads.length, state: "success", color: T.success },
+              { label: "Partial (AI timeout)", count: partialLeads.length, state: "partial", color: T.warning },
+              { label: "Failed Ingestion", count: failedLeads.length, state: "failed", color: T.danger },
+              { label: "Duplicate Flagged", count: dupLeads.length, state: "duplicate", color: T.purple },
+            ].map(({ label, count, state, color }) => {
+              const active = filterState === state;
+              return (
+                <div key={state} onClick={() => setTileFilter(state)} className="flex items-center gap-3 p-2.5 rounded-lg cursor-pointer hover:bg-slate-50 transition-colors" style={{ background: active ? T.primarySoft : undefined, border: `1px solid ${active ? T.primary : "transparent"}` }}>
+                  <div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: color }} />
+                  <span className="text-[13px] flex-1" style={{ color: T.text }}>{label}</span>
+                  <span className="text-[13px] font-semibold" style={{ color }}>{count}</span>
+                  <div className="w-24 h-1.5 rounded-full overflow-hidden" style={{ background: "#E4E7F0" }}>
+                    <div className="h-full rounded-full" style={{ width: `${(count / leads.length) * 100}%`, background: color }} />
+                  </div>
+                </div>
+              );
+            })}
+          </CardBody>
+        </Card>
+
+        {/* Lead sources */}
+        <Card>
+          <CardHeader title="Lead Sources (30d)" />
+          <CardBody className="p-0">
+            <div className="overflow-auto">
+              <table className="w-full text-[13px] border-collapse">
+                <thead><tr>{["Source", "Leads", "Conv%", "Cost/Lead"].map((h) => (
+                  <th key={h} className="text-left text-[11px] font-semibold uppercase tracking-wider px-4 py-2.5 border-b" style={{ color: T.text3, borderColor: T.border, background: T.subtle }}>{h}</th>
+                ))}</tr></thead>
+                <tbody>
+                  {LEAD_SOURCES_DATA.map((s) => (
+                    <tr key={s.source} className="hover:bg-slate-50 cursor-pointer" onClick={() => setFilterSource((cur) => cur === s.source ? "All" : s.source)} style={{ background: filterSource === s.source ? T.primarySoft : undefined }}>
+                      <td className="px-4 py-2.5 border-b font-medium" style={{ borderColor: T.border, color: T.text }}>{s.source}</td>
+                      <td className="px-4 py-2.5 border-b" style={{ borderColor: T.border, color: T.text }}>{s.count.toLocaleString("en-IN")}</td>
+                      <td className="px-4 py-2.5 border-b" style={{ borderColor: T.border, color: s.convPct >= 5 ? T.success : T.text }}>{s.convPct}%</td>
+                      <td className="px-4 py-2.5 border-b" style={{ borderColor: T.border, color: T.text }}>{s.costPerLead ? `₹${s.costPerLead}` : "Free"}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </CardBody>
+        </Card>
+      </div>
+
+      {/* Recent Leads table */}
+      <Card className="flex flex-col">
+        <CardHeader title="Recent Leads"
+          sub={piiGranted ? `PII visible · expires ${activePIIGrant?.expiresAt?.split(",")[1]?.trim() || "soon"}` : "PII masked · request access to view contact details"}
+          action={
+            <div className="flex items-center gap-2">
+              {filterState !== "All" && <button onClick={() => setFilterState("All")} className="text-[12px] flex items-center gap-1 px-2 py-1 rounded" style={{ background: T.primarySoft, color: T.accentText }}><X size={11} />Clear filter</button>}
+              {!piiGranted && <button onClick={() => { setPIILeadId(null); setPIIModal(true); }} className="text-[12px] flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border" style={{ borderColor: T.border, color: T.primary }}><Lock size={12} />Request PII access</button>}
+            </div>
+          }
+        />
+        {/* Search + filters */}
+        <div className="px-5 py-3 border-b flex flex-wrap gap-2 items-center" style={{ borderColor: T.border }}>
+          <SearchInput value={search} onChange={setSearch} placeholder="Search leads, tenant, ID…" />
+          {[
+            { label: "Source", value: filterSource, set: setFilterSource, opts: ["All", ...LEAD_SOURCES] },
+            { label: "Tenant", value: filterTenant, set: setFilterTenant, opts: ["All", ...LEAD_TENANTS] },
+            { label: "Status", value: filterStatus, set: setFilterStatus, opts: ["All", ...LEAD_STATUSES] },
+          ].map(({ label, value, set, opts }) => (
+            <div key={label} className="relative">
+              <select value={value} onChange={(e) => { set(e.target.value); setPage(1); }}
+                className="appearance-none pl-2.5 pr-6 py-1.5 rounded-lg border text-[12px] outline-none" style={{ borderColor: value !== "All" ? T.primary : T.border, background: value !== "All" ? T.primarySoft : "#fff", color: T.text }}>
+                {opts.map((o) => <option key={o} value={o}>{o === "All" ? `All ${label}s` : o}</option>)}
+              </select>
+              <ChevronDown size={11} className="absolute right-1.5 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: T.text3 }} />
             </div>
           ))}
-        </CardBody></Card>
-      </div>
+          <span className="text-[12px] ml-auto" style={{ color: T.text3 }}>{filtered.length} leads</span>
+        </div>
+        <Pagination page={page} totalPages={totalPages} setPage={setPage} perPage={perPage} setPerPage={setPerPage} total={total} />
+        <Table head={["Lead ID", "Source", "Tenant", "Contact (PII)", "Status", "Processing", "Received", "Actions"]}>
+          {pageRows.length === 0 ? (
+            <tr><td colSpan={8} className="text-center py-10 text-[13px]" style={{ color: T.text3 }}>No leads match the current filters.</td></tr>
+          ) : pageRows.map((l) => (
+            <tr key={l.id} className="hover:bg-[#F8F9FC] cursor-pointer" onClick={() => setDetailLead(l)}>
+              <Td className="font-mono text-xs" style={{ color: T.text2 }}>{l.id}</Td>
+              <Td><Badge tone="gray">{l.source}</Badge></Td>
+              <Td className="text-[13px]" style={{ color: T.text }}>{l.tenant}</Td>
+              <Td>
+                {piiGranted ? (
+                  <div><div className="text-[13px] font-medium" style={{ color: T.text }}>{l.name}</div><div className="text-[11px]" style={{ color: T.text3 }}>{l.phone}</div></div>
+                ) : (
+                  <button onClick={(e) => { e.stopPropagation(); setPIILeadId(l.id); setPIIModal(true); }}
+                    className="text-[11px] flex items-center gap-1 px-2 py-1 rounded-lg border" style={{ borderColor: T.border, color: T.text3 }}>
+                    <Lock size={11} />PII masked · request access
+                  </button>
+                )}
+              </Td>
+              <Td><Badge tone={statusTone[l.status] || "gray"}>{l.status}</Badge></Td>
+              <Td>
+                <div className="flex items-center gap-1.5">
+                  <Badge tone={procTone[l.procState]}>{l.procState}</Badge>
+                  {l.procState === "duplicate" && (
+                    <button onClick={(e) => { e.stopPropagation(); setDupModal(l); }} className="text-[11px] underline" style={{ color: T.purple }}>Review</button>
+                  )}
+                </div>
+              </Td>
+              <Td className="text-[11px] whitespace-nowrap" style={{ color: T.text2 }}>{l.receivedAt}</Td>
+              <Td>
+                <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+                  {l.procState === "failed" && (
+                    <button onClick={() => triggerReprocess([l.id])} title="Reprocess" className="p-1 rounded hover:bg-slate-100"><RefreshCw size={14} style={{ color: T.danger }} /></button>
+                  )}
+                  <button onClick={() => setDetailLead(l)} title="View details" className="p-1 rounded hover:bg-slate-100"><Eye size={14} style={{ color: T.text3 }} /></button>
+                </div>
+              </Td>
+            </tr>
+          ))}
+        </Table>
+      </Card>
+
+      {/* Reprocess confirm */}
+      {reprocessConfirm && (
+        <Modal open={!!reprocessConfirm} onClose={() => setReprocessConfirm(null)} title="Confirm Reprocessing"
+          footer={<><Button onClick={() => setReprocessConfirm(null)}>Cancel</Button><Button variant="primary" onClick={doReprocess}><RefreshCw size={13} />Reprocess {reprocessConfirm.ids.length} lead(s)</Button></>}>
+          <p className="text-[13px]" style={{ color: T.text2 }}>
+            This will re-run ingestion for <strong style={{ color: T.text }}>{reprocessConfirm.ids.length} failed lead{reprocessConfirm.ids.length !== 1 ? "s" : ""}</strong>. The action is logged to the audit trail. Failed leads that succeed will move to "success" state.
+          </p>
+          <div className="mt-3 rounded-lg px-3 py-2 text-[12px]" style={{ background: T.warningSoft, color: "#92400E" }}>
+            ⚠ Typically caused by API auth errors — ensure the source token is refreshed before reprocessing.
+          </div>
+        </Modal>
+      )}
+
+      {/* PII access modal */}
+      <PIIAccessModal open={piiModal} onClose={() => setPIIModal(false)} onGranted={handlePIIGranted} leadId={piiLeadId} />
+
+      {/* Lead detail drawer */}
+      <LeadDetailDrawer
+        lead={detailLead ? leads.find((l) => l.id === detailLead.id) || detailLead : null}
+        leads={leads}
+        open={!!detailLead}
+        onClose={() => setDetailLead(null)}
+        piiGranted={piiGranted}
+        onRequestPII={() => { setPIILeadId(detailLead?.id); setPIIModal(true); }}
+        onReprocess={triggerReprocess}
+        onStatusChange={handleStatusChange}
+        onAssign={handleAssign}
+      />
+
+      {/* Duplicate review modal */}
+      <DuplicateReviewModal open={!!dupModal} onClose={() => setDupModal(null)} lead={dupModal} leads={leads} onMerge={handleMerge} onDismiss={handleDismiss} />
     </>
   );
 }
