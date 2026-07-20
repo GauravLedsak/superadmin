@@ -506,6 +506,36 @@ function StoreProvider({ children }) {
       }));
       notify("Saved");
     },
+    createOnboarding: (fields, onCreated) => {
+      // Duplicate guard — one active onboarding per client
+      setOnboarding((os) => {
+        if (os.some((o) => o.clientId === fields.clientId)) {
+          notify("This client already has an active onboarding");
+          return os;
+        }
+        const now = new Date().toLocaleString("en-IN", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
+        const newRecord = {
+          id: Date.now(),
+          clientId: fields.clientId,
+          clientName: fields.clientName,
+          industry: fields.industry,
+          owner: fields.owner,
+          startedAt: fields.startedAt,
+          targetGoLive: fields.targetGoLive || "",
+          dealMRR: fields.dealMRR,
+          provider: fields.provider,
+          contact: fields.contact || "",
+          currentStage: fields.startingStage || "Kickoff",
+          checklist: mkChecklist([]),
+          activity: [{ id: "act-" + Date.now(), who: ADMIN, what: `Onboarding started by ${ADMIN}`, when: now }],
+        };
+        const next = [...os, newRecord];
+        saveOnboarding(next);
+        notify(`Onboarding started for ${fields.clientName}`);
+        if (onCreated) setTimeout(() => onCreated(newRecord), 0);
+        return next;
+      });
+    },
     setTicketStatus: (id, status) => { setTickets((ts) => ts.map((t) => (t.id === id ? { ...t, status } : t))); notify(`Ticket marked ${status.toLowerCase()}`); },
     markNotifRead: (id) => setNotifs((ns) => ns.map((n) => (n.id === id ? { ...n, read: true } : n))),
     markAllRead: () => { setNotifs((ns) => ns.map((n) => ({ ...n, read: true }))); notify("All caught up"); },
@@ -1751,9 +1781,259 @@ function OnboardingDetail({ item, onClose }) {
   );
 }
 
+function StartOnboardingModal({ open, onClose, onCreated }) {
+  const store = useStore();
+  const [step, setStep] = useState(1);
+  const [search, setSearch] = useState("");
+  const [selectedClient, setSelectedClient] = useState(null);
+  const [owner, setOwner] = useState(ADMIN);
+  const [startedAt, setStartedAt] = useState(NOW);
+  const [targetGoLive, setTargetGoLive] = useState("");
+  const [startingStage, setStartingStage] = useState("Kickoff");
+  const [submitting, setSubmitting] = useState(false);
+  const [dupError, setDupError] = useState(false);
+
+  const alreadyOnboarding = new Set(store.onboarding.map((o) => o.clientId));
+
+  const eligibleClients = store.clients.filter(
+    (c) => c.status !== "Suspended" && !alreadyOnboarding.has(c.id)
+  );
+
+  const filtered = search.trim()
+    ? eligibleClients.filter((c) => c.name.toLowerCase().includes(search.toLowerCase()) || c.industry.toLowerCase().includes(search.toLowerCase()))
+    : eligibleClients;
+
+  const reset = () => {
+    setStep(1); setSearch(""); setSelectedClient(null);
+    setOwner(ADMIN); setStartedAt(NOW); setTargetGoLive("");
+    setStartingStage("Kickoff"); setSubmitting(false); setDupError(false);
+  };
+
+  const handleClose = () => { reset(); onClose(); };
+
+  const handleSubmit = () => {
+    if (!selectedClient || !owner || !startedAt) return;
+    if (alreadyOnboarding.has(selectedClient.id)) { setDupError(true); return; }
+    setSubmitting(true);
+    store.createOnboarding({
+      clientId: selectedClient.id,
+      clientName: selectedClient.name,
+      industry: selectedClient.industry,
+      owner,
+      startedAt,
+      targetGoLive,
+      dealMRR: selectedClient.mrr,
+      provider: selectedClient.provider,
+      contact: "",
+      startingStage,
+    }, (newRecord) => {
+      setSubmitting(false);
+      reset();
+      onClose();
+      if (onCreated) onCreated(newRecord);
+    });
+  };
+
+  if (!open) return null;
+  const canSubmit = selectedClient && owner && startedAt && !submitting;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={handleClose}>
+      <div className="absolute inset-0" style={{ background: "rgba(26,31,54,.4)" }} />
+      <div className="relative w-full max-w-lg rounded-2xl bg-white shadow-2xl overflow-hidden" onClick={(e) => e.stopPropagation()}>
+        {/* Header */}
+        <div className="flex items-center justify-between px-6 py-4 border-b" style={{ borderColor: "#E4E7F0" }}>
+          <div>
+            <h3 className="text-[15px] font-semibold" style={{ color: "#1A1F36" }}>Start Onboarding</h3>
+            <p className="text-[12px] mt-0.5" style={{ color: "#5A6275" }}>
+              {step === 1 ? "Step 1 of 2 — Select an existing client account" : "Step 2 of 2 — Configure the onboarding"}
+            </p>
+          </div>
+          <button onClick={handleClose} className="p-1.5 rounded-lg hover:bg-slate-100"><X size={16} style={{ color: "#8B95A8" }} /></button>
+        </div>
+
+        {/* Step indicator */}
+        <div className="flex" style={{ background: "#F8F9FC" }}>
+          {[1, 2].map((s) => (
+            <div key={s} className="flex-1 h-1" style={{ background: s <= step ? "#295FB2" : "#E4E7F0" }} />
+          ))}
+        </div>
+
+        <div className="px-6 py-5">
+          {/* ── STEP 1: Select client ── */}
+          {step === 1 && (
+            <div className="space-y-4">
+              <div>
+                <label className="block text-[11px] font-semibold uppercase tracking-wider mb-1.5" style={{ color: "#8B95A8" }}>Search client accounts</label>
+                <div className="relative">
+                  <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: "#8B95A8" }} />
+                  <input
+                    autoFocus
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    placeholder="Type client name or industry…"
+                    className="w-full pl-9 pr-3 py-2 rounded-lg border text-[13px] outline-none focus:ring-2"
+                    style={{ borderColor: "#E4E7F0", "--tw-ring-color": "#295FB2" }}
+                  />
+                </div>
+              </div>
+
+              {/* Client list */}
+              <div className="rounded-xl border overflow-hidden" style={{ borderColor: "#E4E7F0", maxHeight: 280, overflowY: "auto" }}>
+                {filtered.length === 0 ? (
+                  <div className="py-8 text-center">
+                    <p className="text-[13px] font-medium mb-1" style={{ color: "#1A1F36" }}>No eligible clients found</p>
+                    <p className="text-[12px]" style={{ color: "#8B95A8" }}>
+                      {eligibleClients.length === 0
+                        ? "All active clients already have onboardings in progress."
+                        : "No clients match your search."}
+                    </p>
+                  </div>
+                ) : (
+                  filtered.map((c, idx) => (
+                    <button
+                      key={c.id}
+                      onClick={() => setSelectedClient(c)}
+                      className="w-full flex items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-slate-50"
+                      style={{
+                        borderTop: idx > 0 ? `1px solid #E4E7F0` : "none",
+                        background: selectedClient?.id === c.id ? "#EEF2FF" : undefined,
+                      }}
+                    >
+                      <div className="w-8 h-8 rounded-full flex items-center justify-center font-semibold text-[13px] shrink-0"
+                        style={{ background: "#EEF2FF", color: "#3451D1" }}>{c.name.charAt(0)}</div>
+                      <div className="flex-1 min-w-0">
+                        <div className="text-[13px] font-medium truncate" style={{ color: "#1A1F36" }}>{c.name}</div>
+                        <div className="text-[11px]" style={{ color: "#8B95A8" }}>{c.industry} · {c.plan}</div>
+                      </div>
+                      <div className="text-[12px] font-semibold shrink-0" style={{ color: "#295FB2" }}>
+                        {c.mrr ? "₹" + Number(c.mrr).toLocaleString("en-IN") : "Trial"}
+                      </div>
+                      {selectedClient?.id === c.id && <Check size={15} style={{ color: "#295FB2" }} />}
+                    </button>
+                  ))
+                )}
+              </div>
+
+              {/* Helper text */}
+              <p className="text-[12px]" style={{ color: "#8B95A8" }}>
+                Client not here?{" "}
+                <span style={{ color: "#295FB2" }}>They must complete signup first.</span>{" "}
+                Check the <strong>Clients</strong> module for account status. Clients already in the pipeline are excluded.
+              </p>
+            </div>
+          )}
+
+          {/* ── STEP 2: Configure ── */}
+          {step === 2 && selectedClient && (
+            <div className="space-y-4">
+              {/* Read-only client facts */}
+              <div className="rounded-xl p-4 grid grid-cols-2 gap-3" style={{ background: "#F8F9FC", border: "1px solid #E4E7F0" }}>
+                <div>
+                  <div className="text-[10px] font-semibold uppercase tracking-wider mb-0.5" style={{ color: "#8B95A8" }}>Client</div>
+                  <div className="text-[13px] font-medium" style={{ color: "#1A1F36" }}>{selectedClient.name}</div>
+                </div>
+                <div>
+                  <div className="text-[10px] font-semibold uppercase tracking-wider mb-0.5" style={{ color: "#8B95A8" }}>Industry</div>
+                  <div className="text-[13px]" style={{ color: "#1A1F36" }}>{selectedClient.industry}</div>
+                </div>
+                <div>
+                  <div className="text-[10px] font-semibold uppercase tracking-wider mb-0.5" style={{ color: "#8B95A8" }}>Plan</div>
+                  <div className="text-[13px] truncate" style={{ color: "#1A1F36" }}>{selectedClient.plan}</div>
+                </div>
+                <div>
+                  <div className="text-[10px] font-semibold uppercase tracking-wider mb-0.5" style={{ color: "#8B95A8" }}>Deal MRR</div>
+                  <div className="text-[13px] font-semibold" style={{ color: "#295FB2" }}>
+                    {selectedClient.mrr ? "₹" + Number(selectedClient.mrr).toLocaleString("en-IN") : "—"}
+                  </div>
+                </div>
+                <div className="col-span-2">
+                  <div className="text-[10px] font-semibold uppercase tracking-wider mb-0.5" style={{ color: "#8B95A8" }}>Provider</div>
+                  <div className="text-[13px]" style={{ color: "#1A1F36" }}>{selectedClient.provider || "—"}</div>
+                </div>
+              </div>
+
+              {/* Editable fields */}
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[11px] font-semibold uppercase tracking-wider mb-1.5" style={{ color: "#8B95A8" }}>Owner / CSM <span style={{ color: "#DC2626" }}>*</span></label>
+                  <select value={owner} onChange={(e) => setOwner(e.target.value)}
+                    className="w-full border rounded-lg px-3 py-2 text-[13px] outline-none"
+                    style={{ borderColor: "#E4E7F0" }}>
+                    {ONBOARD_OWNERS.map((o) => <option key={o} value={o}>{o}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-[11px] font-semibold uppercase tracking-wider mb-1.5" style={{ color: "#8B95A8" }}>Starting Stage</label>
+                  <select value={startingStage} onChange={(e) => setStartingStage(e.target.value)}
+                    className="w-full border rounded-lg px-3 py-2 text-[13px] outline-none"
+                    style={{ borderColor: "#E4E7F0" }}>
+                    {ONBOARD_STAGES.map((s) => <option key={s} value={s}>{s}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-[11px] font-semibold uppercase tracking-wider mb-1.5" style={{ color: "#8B95A8" }}>Start Date <span style={{ color: "#DC2626" }}>*</span></label>
+                  <input type="text" value={startedAt} onChange={(e) => setStartedAt(e.target.value)}
+                    placeholder="e.g. 13 May 2026"
+                    className="w-full border rounded-lg px-3 py-2 text-[13px] outline-none"
+                    style={{ borderColor: "#E4E7F0" }} />
+                </div>
+                <div>
+                  <label className="block text-[11px] font-semibold uppercase tracking-wider mb-1.5" style={{ color: "#8B95A8" }}>Target Go-Live</label>
+                  <input type="text" value={targetGoLive} onChange={(e) => setTargetGoLive(e.target.value)}
+                    placeholder="e.g. 03 Jun 2026"
+                    className="w-full border rounded-lg px-3 py-2 text-[13px] outline-none"
+                    style={{ borderColor: "#E4E7F0" }} />
+                </div>
+              </div>
+
+              {dupError && (
+                <p className="text-[12px] rounded-lg px-3 py-2" style={{ background: "#FEE2E2", color: "#991B1B" }}>
+                  This client already has an onboarding in progress. Only one active onboarding is allowed per client.
+                </p>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Footer */}
+        <div className="flex items-center justify-between px-6 py-4 border-t" style={{ borderColor: "#E4E7F0" }}>
+          <button onClick={handleClose} className="text-[13px] font-medium hover:underline" style={{ color: "#8B95A8" }}>Cancel</button>
+          <div className="flex gap-2">
+            {step === 2 && (
+              <button onClick={() => setStep(1)} className="inline-flex items-center gap-1.5 px-3.5 py-2 text-[13px] font-medium rounded-lg border"
+                style={{ borderColor: "#E4E7F0", color: "#5A6275" }}>
+                <ArrowLeft size={13} /> Back
+              </button>
+            )}
+            {step === 1 ? (
+              <button
+                disabled={!selectedClient}
+                onClick={() => setStep(2)}
+                className="inline-flex items-center gap-1.5 px-4 py-2 text-[13px] font-semibold rounded-lg disabled:opacity-40"
+                style={{ background: "#295FB2", color: "#fff" }}>
+                Next <ArrowRight size={13} />
+              </button>
+            ) : (
+              <button
+                disabled={!canSubmit}
+                onClick={handleSubmit}
+                className="inline-flex items-center gap-1.5 px-4 py-2 text-[13px] font-semibold rounded-lg disabled:opacity-40"
+                style={{ background: "#295FB2", color: "#fff" }}>
+                {submitting ? "Starting…" : <><Rocket size={13} /> Start Onboarding</>}
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function OnboardingPage() {
   const store = useStore();
   const [detail, setDetail] = useState(null);
+  const [startModal, setStartModal] = useState(false);
   const [dragId, setDragId] = useState(null);
   const [dragOver, setDragOver] = useState(null);
   const stageTone = { Kickoff: "gray", Configuring: "info", "Data Import": "purple", Training: "warning", "Go-Live": "success" };
@@ -1781,7 +2061,7 @@ function OnboardingPage() {
   return (
     <>
       <PageHeader title="Client Onboarding" desc="New clients from signed deal to go-live — kickoff, config, import, training"
-        actions={<Button variant="primary" onClick={() => store.notify("New onboarding started")}><Plus size={15} /> Start Onboarding</Button>} />
+        actions={<Button variant="primary" onClick={() => setStartModal(true)}><Plus size={15} /> Start Onboarding</Button>} />
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
         <Kpi label="In Pipeline" value={String(store.onboarding.length)} sub="active onboardings" />
         <Kpi label="Pipeline MRR" value={fmtINR(pipelineMRR)} sub="combined deal value" trend="pos" />
@@ -1838,6 +2118,7 @@ function OnboardingPage() {
         })}
       </div>
       <OnboardingDetail item={detail ? store.onboarding.find((x) => x.id === detail.id) || detail : null} onClose={() => setDetail(null)} />
+      <StartOnboardingModal open={startModal} onClose={() => setStartModal(false)} onCreated={(rec) => setDetail(rec)} />
     </>
   );
 }
