@@ -47,15 +47,58 @@ const SEED_CLIENTS = [
   { id: 14, name: "Cosmetique", industry: "Clinic", plan: "Dermapuritys", planEnd: "08-04-2027", leads: 2865, aiUsed: 0, usage: 4.58, employees: 10, seats: 10, branch: "Amritsar", mrr: 8333, health: 90, status: "Active", churnRisk: "Low", am: "Luv", gst: "03AAQCC9012X1Z5", provider: "Website", providerOk: true, lastLogin: "09 May 2026" },
   { id: 15, name: "Mahakumbh Motors", industry: "Automotive", plan: "Mahakumbh Special", planEnd: "15-08-2025", leads: 2149, aiUsed: 0, usage: 0.62, employees: 22, seats: 25, branch: "Prayagraj", mrr: 5000, health: 44, status: "Suspended", churnRisk: "High", am: "Saif Sir", gst: "09AARCM3456Y1Z8", provider: "CarWale", providerOk: false, lastLogin: "18 Apr 2026" },
 ];
-const SEED_ONBOARDING = [
-  { id: 101, client: "Nexa Auto Group", industry: "Automotive", am: "Saif Sir", stage: "Kickoff", started: "02 May 2026", mrr: 15000, tasksDone: 2, tasksTotal: 8, provider: "CarWale + CarDekho", contact: "Rohit Anand" },
-  { id: 102, client: "Skin Story Clinics", industry: "Clinic", am: "Luv", stage: "Configuring", started: "28 Apr 2026", mrr: 9000, tasksDone: 5, tasksTotal: 8, provider: "Website", contact: "Dr. Meera Iyer" },
-  { id: 103, client: "DriveEasy Motors", industry: "Automotive", am: "Vishal", stage: "Data Import", started: "25 Apr 2026", mrr: 12000, tasksDone: 6, tasksTotal: 8, provider: "CarDekho", contact: "Sanjay Rao" },
-  { id: 104, client: "BrightPath Edu", industry: "Education", am: "Vishal", stage: "Training", started: "20 Apr 2026", mrr: 6000, tasksDone: 7, tasksTotal: 8, provider: "Website", contact: "Kavita Nair" },
-  { id: 105, client: "Glow Aesthetics", industry: "Clinic", am: "Luv", stage: "Go-Live", started: "15 Apr 2026", mrr: 8500, tasksDone: 8, tasksTotal: 8, provider: "Website + WhatsApp", contact: "Dr. Anjali Sethi" },
-];
 const ONBOARD_STAGES = ["Kickoff", "Configuring", "Data Import", "Training", "Go-Live"];
-const ONBOARD_TASKS = ["Kickoff call & scope sign-off", "Create tenant & assign plan", "Configure 4-tier hierarchy", "Connect lead providers", "Set routing & automation rules", "Import existing leads", "Train Team Leads & Telecallers", "Go-live sign-off"];
+const ONBOARD_OWNERS = ["Saif Sir", "Luv", "Vishal"];
+const CHECKLIST_TEMPLATE = [
+  { id: "t1", label: "Kickoff call completed", stage: "Kickoff" },
+  { id: "t2", label: "Scope document signed off", stage: "Kickoff" },
+  { id: "t3", label: "Tenant created & plan assigned", stage: "Configuring" },
+  { id: "t4", label: "4-tier hierarchy configured", stage: "Configuring" },
+  { id: "t5", label: "Lead providers connected", stage: "Configuring" },
+  { id: "t6", label: "Routing & automation rules set", stage: "Configuring" },
+  { id: "t7", label: "Existing leads imported", stage: "Data Import" },
+  { id: "t8", label: "Data validation completed", stage: "Data Import" },
+  { id: "t9", label: "Team Lead training done", stage: "Training" },
+  { id: "t10", label: "Telecaller training done", stage: "Training" },
+  { id: "t11", label: "QA sign-off checklist passed", stage: "Go-Live" },
+  { id: "t12", label: "Go-live sign-off received ✦ required", stage: "Go-Live" },
+];
+const GOLIVE_REQUIRED_TASKS = ["t11", "t12"];
+const mkChecklist = (doneIds = []) => CHECKLIST_TEMPLATE.map((t) => ({ ...t, completed: doneIds.includes(t.id) }));
+const SEED_ONBOARDING = [
+  { id: 101, clientName: "Nexa Auto Group", industry: "Automotive", owner: "Saif Sir", startedAt: "02 May 2026", dealMRR: 15000, provider: "CarWale + CarDekho", currentStage: "Kickoff", contact: "Rohit Anand",
+    checklist: mkChecklist(["t1"]),
+    activity: [{ id: "act-1", who: "Saif Sir", what: "Stage set to Kickoff", when: "02 May 2026 09:00" }] },
+  { id: 102, clientName: "Skin Story Clinics", industry: "Clinic", owner: "Luv", startedAt: "28 Apr 2026", dealMRR: 9000, provider: "Website", currentStage: "Configuring", contact: "Dr. Meera Iyer",
+    checklist: mkChecklist(["t1", "t2", "t3", "t4", "t5"]),
+    activity: [
+      { id: "act-3", who: "Luv", what: "Stage advanced: Kickoff → Configuring", when: "30 Apr 2026 14:00" },
+      { id: "act-2", who: "Luv", what: "Stage set to Kickoff", when: "28 Apr 2026 09:00" },
+    ] },
+  { id: 103, clientName: "DriveEasy Motors", industry: "Automotive", owner: "Vishal", startedAt: "25 Apr 2026", dealMRR: 12000, provider: "CarDekho", currentStage: "Data Import", contact: "Sanjay Rao",
+    checklist: mkChecklist(["t1", "t2", "t3", "t4", "t5", "t6", "t7"]),
+    activity: [
+      { id: "act-5", who: "Vishal", what: "Stage advanced: Configuring → Data Import", when: "01 May 2026 11:00" },
+      { id: "act-4", who: "Vishal", what: "Stage advanced: Kickoff → Configuring", when: "27 Apr 2026 10:00" },
+      { id: "act-6", who: "Vishal", what: "Stage set to Kickoff", when: "25 Apr 2026 09:00" },
+    ] },
+  { id: 104, clientName: "BrightPath Edu", industry: "Education", owner: "Vishal", startedAt: "20 Apr 2026", dealMRR: 6000, provider: "Website", currentStage: "Training", contact: "Kavita Nair",
+    checklist: mkChecklist(["t1", "t2", "t3", "t4", "t5", "t6", "t7", "t8", "t9"]),
+    activity: [
+      { id: "act-9", who: "Vishal", what: "Stage advanced: Data Import → Training", when: "29 Apr 2026 16:00" },
+      { id: "act-8", who: "Vishal", what: "Stage advanced: Configuring → Data Import", when: "25 Apr 2026 10:00" },
+      { id: "act-7", who: "Vishal", what: "Stage advanced: Kickoff → Configuring", when: "22 Apr 2026 09:00" },
+    ] },
+  { id: 105, clientName: "Glow Aesthetics", industry: "Clinic", owner: "Luv", startedAt: "15 Apr 2026", dealMRR: 8500, provider: "Website + WhatsApp", currentStage: "Go-Live", contact: "Dr. Anjali Sethi",
+    checklist: mkChecklist(["t1", "t2", "t3", "t4", "t5", "t6", "t7", "t8", "t9", "t10", "t11", "t12"]),
+    activity: [
+      { id: "act-14", who: "Luv", what: "Stage advanced: Training → Go-Live", when: "25 Apr 2026 12:00" },
+      { id: "act-13", who: "Luv", what: "Stage advanced: Data Import → Training", when: "22 Apr 2026 10:00" },
+    ] },
+];
+const ONBOARD_STORAGE_KEY = "ledsak_onboarding_v2";
+const loadOnboarding = () => { try { const s = localStorage.getItem(ONBOARD_STORAGE_KEY); return s ? JSON.parse(s) : null; } catch { return null; } };
+const saveOnboarding = (data) => { try { localStorage.setItem(ONBOARD_STORAGE_KEY, JSON.stringify(data)); } catch {} };
 const SEED_INVOICES = [
   { id: "INV-2451", client: "MedLinks", amt: 16250, status: "Paid", date: "01 May 2026", method: "UPI" },
   { id: "INV-2452", client: "Dermalife", amt: 12500, status: "Pending", date: "03 May 2026", method: "Bank" },
@@ -384,7 +427,14 @@ function StoreProvider({ children }) {
   const [invoices, setInvoices] = useState(SEED_INVOICES);
   const [users, setUsers] = useState(SEED_USERS);
   const [tickets, setTickets] = useState(SEED_TICKETS);
-  const [onboarding, setOnboarding] = useState(SEED_ONBOARDING);
+  const [onboarding, setOnboardingRaw] = useState(() => loadOnboarding() || SEED_ONBOARDING);
+  const setOnboarding = useCallback((updater) => {
+    setOnboardingRaw((prev) => {
+      const next = typeof updater === "function" ? updater(prev) : updater;
+      saveOnboarding(next);
+      return next;
+    });
+  }, []);
   const [notifs, setNotifs] = useState(SEED_NOTIFS);
   const [toast, setToast] = useState(null);
   const [impersonating, setImpersonating] = useState(null);
@@ -430,7 +480,32 @@ function StoreProvider({ children }) {
     resetPassword: (name) => notify(`Password reset link sent to ${name}`),
     impersonate: (u) => { setImpersonating(u); notify(`Now viewing as ${u.name || u}`); },
     stopImpersonate: () => setImpersonating(null),
-    advanceOnboarding: (id) => { setOnboarding((os) => os.map((o) => { if (o.id !== id) return o; const idx = ONBOARD_STAGES.indexOf(o.stage); if (idx >= ONBOARD_STAGES.length - 1) { notify(`${o.client} promoted`); return o; } notify(`${o.client} → ${ONBOARD_STAGES[idx + 1]}`); return { ...o, stage: ONBOARD_STAGES[idx + 1], tasksDone: Math.min(o.tasksTotal, o.tasksDone + 2) }; })); },
+    updateOnboardingStage: (id, newStage) => {
+      setOnboarding((os) => os.map((o) => {
+        if (o.id !== id) return o;
+        const oldStage = o.currentStage;
+        const actEntry = { id: "act-" + Date.now(), who: ADMIN, what: `Stage changed: ${oldStage} → ${newStage}`, when: new Date().toLocaleString("en-IN", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }) };
+        return { ...o, currentStage: newStage, activity: [actEntry, ...(o.activity || [])] };
+      }));
+      notify(`Stage → ${newStage}`);
+    },
+    toggleChecklistItem: (id, itemId) => {
+      setOnboarding((os) => os.map((o) => {
+        if (o.id !== id) return o;
+        const checklist = o.checklist.map((c) => c.id === itemId ? { ...c, completed: !c.completed } : c);
+        const item = checklist.find((c) => c.id === itemId);
+        const actEntry = { id: "act-" + Date.now(), who: ADMIN, what: `Task "${item.label.replace(" ✦ required", "")}" ${item.completed ? "completed" : "unchecked"}`, when: new Date().toLocaleString("en-IN", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }) };
+        return { ...o, checklist, activity: [actEntry, ...(o.activity || [])] };
+      }));
+    },
+    updateOnboardingField: (id, field, value) => {
+      setOnboarding((os) => os.map((o) => {
+        if (o.id !== id) return o;
+        const actEntry = { id: "act-" + Date.now(), who: ADMIN, what: `${field} updated to "${value}"`, when: new Date().toLocaleString("en-IN", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }) };
+        return { ...o, [field]: value, activity: [actEntry, ...(o.activity || [])] };
+      }));
+      notify("Saved");
+    },
     setTicketStatus: (id, status) => { setTickets((ts) => ts.map((t) => (t.id === id ? { ...t, status } : t))); notify(`Ticket marked ${status.toLowerCase()}`); },
     markNotifRead: (id) => setNotifs((ns) => ns.map((n) => (n.id === id ? { ...n, read: true } : n))),
     markAllRead: () => { setNotifs((ns) => ns.map((n) => ({ ...n, read: true }))); notify("All caught up"); },
@@ -1438,76 +1513,270 @@ function ClientsPage() {
 /* ============================================================
    ONBOARDING PIPELINE — kickoff → go-live
    ============================================================ */
+/* ---- Confirm modal reused for advance-with-incomplete-tasks ---- */
+function ConfirmAdvanceModal({ open, onClose, onConfirm, clientName, fromStage, toStage, incompleteCount }) {
+  if (!open) return null;
+  return (
+    <Modal open={open} onClose={onClose} title="Advance with incomplete tasks?"
+      footer={<><Button onClick={onClose}>Cancel</Button><Button variant="primary" onClick={onConfirm}>Advance anyway</Button></>}>
+      <p className="text-[13px]" style={{ color: T.text2 }}>
+        <strong style={{ color: T.text }}>{clientName}</strong> has <strong style={{ color: T.warning }}>{incompleteCount} incomplete task{incompleteCount !== 1 ? "s" : ""}</strong> in <em>{fromStage}</em>.
+        Advancing to <strong>{toStage}</strong> will not complete them automatically — they will remain open.
+      </p>
+    </Modal>
+  );
+}
+
 function OnboardingDetail({ item, onClose }) {
   const store = useStore();
   const o = store.onboarding.find((x) => x.id === item?.id) || item;
-  if (!item) return null;
-  const stageIdx = ONBOARD_STAGES.indexOf(o.stage);
+  const [tab, setTab] = useState("checklist");
+  const [confirmState, setConfirmState] = useState(null); // { toStage, incompleteCount }
+  const [editMRR, setEditMRR] = useState(false);
+  const [mrrDraft, setMRRDraft] = useState("");
+  const [editProvider, setEditProvider] = useState(false);
+  const [providerDraft, setProviderDraft] = useState("");
+
+  if (!item || !o) return null;
+
+  const stageIdx = ONBOARD_STAGES.indexOf(o.currentStage);
+  const tasksDone = o.checklist.filter((c) => c.completed).length;
+  const tasksTotal = o.checklist.length;
+  const pct = Math.round((tasksDone / tasksTotal) * 100);
+
+  const incompleteInCurrentStage = o.checklist.filter((c) => c.stage === o.currentStage && !c.completed).length;
+  const missingGoLive = o.currentStage === "Training"
+    ? GOLIVE_REQUIRED_TASKS.filter((tid) => !o.checklist.find((c) => c.id === tid)?.completed)
+    : [];
+
+  const doChangeStage = (newStage) => {
+    const newIdx = ONBOARD_STAGES.indexOf(newStage);
+    const moving = newIdx > stageIdx;
+    if (moving && incompleteInCurrentStage > 0) {
+      setConfirmState({ toStage: newStage, incompleteCount: incompleteInCurrentStage });
+      return;
+    }
+    store.updateOnboardingStage(o.id, newStage);
+  };
+
+  const confirmAdvance = () => {
+    store.updateOnboardingStage(o.id, confirmState.toStage);
+    setConfirmState(null);
+  };
+
+  const stageByGroup = ONBOARD_STAGES.reduce((acc, s) => {
+    acc[s] = o.checklist.filter((c) => c.stage === s);
+    return acc;
+  }, {});
+
   return (
-    <Drawer open={!!item} onClose={onClose} width={560}>
-      <div className="sticky top-0 bg-white border-b z-10 px-6 pt-5 pb-4 flex items-start justify-between" style={{ borderColor: T.border }}>
-        <div className="flex items-center gap-3">
-          <Avatar name={o.client} tone={o.industry === "Clinic" ? "purple" : "brand"} size={44} />
-          <div>
-            <h2 className="text-lg font-semibold" style={{ color: T.text }}>{o.client}</h2>
-            <div className="text-[13px]" style={{ color: T.text2 }}>{o.industry} · {o.am} · started {o.started}</div>
+    <>
+      <Drawer open={!!item} onClose={onClose} width={580}>
+        {/* Header */}
+        <div className="sticky top-0 bg-white border-b z-10 px-6 pt-5 pb-4" style={{ borderColor: T.border }}>
+          <div className="flex items-start justify-between mb-3">
+            <div className="flex items-center gap-3">
+              <Avatar name={o.clientName} tone={o.industry === "Clinic" ? "purple" : "brand"} size={44} />
+              <div>
+                <h2 className="text-lg font-semibold" style={{ color: T.text }}>{o.clientName}</h2>
+                <div className="text-[13px] flex items-center gap-2" style={{ color: T.text2 }}>
+                  <span>{o.industry}</span>
+                  <span>·</span>
+                  {/* Owner dropdown */}
+                  <select value={o.owner} onChange={(e) => store.updateOnboardingField(o.id, "owner", e.target.value)}
+                    className="border rounded px-1.5 py-0.5 text-[12px] outline-none" style={{ borderColor: T.border, color: T.text }}>
+                    {ONBOARD_OWNERS.map((ow) => <option key={ow} value={ow}>{ow}</option>)}
+                  </select>
+                  <span>· started {o.startedAt}</span>
+                </div>
+              </div>
+            </div>
+            <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-slate-100"><X size={18} style={{ color: T.text3 }} /></button>
+          </div>
+          {/* Stage dropdown */}
+          <div className="flex items-center gap-2 mb-3">
+            <span className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: T.text3 }}>Stage</span>
+            <select value={o.currentStage} onChange={(e) => doChangeStage(e.target.value)}
+              className="border rounded-lg px-2.5 py-1 text-[12px] font-medium outline-none" style={{ borderColor: T.border, color: T.text }}>
+              {ONBOARD_STAGES.map((s) => <option key={s} value={s}>{s}</option>)}
+            </select>
+          </div>
+          {/* Stage stepper — clickable */}
+          <div className="flex items-center gap-1">
+            {ONBOARD_STAGES.map((s, i) => (
+              <React.Fragment key={s}>
+                <div className="flex flex-col items-center gap-1 flex-1 cursor-pointer group" onClick={() => doChangeStage(s)}>
+                  <div className="w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-semibold transition-all group-hover:scale-110"
+                    style={i < stageIdx ? { background: T.success, color: "#fff" } : i === stageIdx ? { background: T.primary, color: "#fff" } : { background: "#E4E7F0", color: T.text3 }}>
+                    {i < stageIdx ? <Check size={13} /> : i + 1}
+                  </div>
+                  <span className="text-[10px] text-center leading-tight" style={{ color: i <= stageIdx ? T.text : T.text3 }}>{s}</span>
+                </div>
+                {i < ONBOARD_STAGES.length - 1 && <div className="h-0.5 flex-1 -mt-4" style={{ background: i < stageIdx ? T.success : "#E4E7F0" }} />}
+              </React.Fragment>
+            ))}
           </div>
         </div>
-        <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-slate-100"><X size={18} style={{ color: T.text3 }} /></button>
-      </div>
-      <div className="px-6 py-5 space-y-4">
-        {/* stage stepper */}
-        <div className="flex items-center gap-1">
-          {ONBOARD_STAGES.map((s, i) => (
-            <React.Fragment key={s}>
-              <div className="flex flex-col items-center gap-1 flex-1">
-                <div className="w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-semibold"
-                  style={i <= stageIdx ? { background: T.primary, color: "#fff" } : { background: "#E4E7F0", color: T.text3 }}>
-                  {i < stageIdx ? <Check size={14} /> : i + 1}
+
+        <div className="px-6 py-5 space-y-4">
+          {/* KPI row — inline editable MRR & provider */}
+          <div className="grid grid-cols-3 gap-3">
+            <div className="rounded-lg border bg-white p-4" style={{ borderColor: T.border }}>
+              <div className="text-[11px] font-semibold uppercase tracking-wider mb-1" style={{ color: T.text3 }}>Deal MRR</div>
+              {editMRR ? (
+                <div className="flex items-center gap-1">
+                  <input autoFocus value={mrrDraft} onChange={(e) => setMRRDraft(e.target.value.replace(/\D/g, ""))}
+                    onKeyDown={(e) => { if (e.key === "Enter") { store.updateOnboardingField(o.id, "dealMRR", Number(mrrDraft)); setEditMRR(false); } if (e.key === "Escape") setEditMRR(false); }}
+                    className="border rounded px-2 py-0.5 text-[13px] w-24 outline-none" style={{ borderColor: T.primary }} />
+                  <button onClick={() => { store.updateOnboardingField(o.id, "dealMRR", Number(mrrDraft)); setEditMRR(false); }} style={{ color: T.success }}><Check size={14} /></button>
+                  <button onClick={() => setEditMRR(false)} style={{ color: T.text3 }}><X size={13} /></button>
                 </div>
-                <span className="text-[10px] text-center leading-tight" style={{ color: i <= stageIdx ? T.text : T.text3 }}>{s}</span>
-              </div>
-              {i < ONBOARD_STAGES.length - 1 && <div className="h-0.5 flex-1 -mt-4" style={{ background: i < stageIdx ? T.primary : "#E4E7F0" }} />}
-            </React.Fragment>
-          ))}
-        </div>
-        <div className="grid grid-cols-3 gap-3">
-          <Kpi label="Deal MRR" value={fmtINR(o.mrr)} />
-          <Kpi label="Tasks" value={`${o.tasksDone}/${o.tasksTotal}`} />
-          <Kpi label="Provider" value={o.provider.split(" ")[0]} sub={o.provider} />
-        </div>
-        <Card>
-          <CardHeader title="Onboarding Checklist" action={<Badge tone={o.tasksDone === o.tasksTotal ? "success" : "warning"}>{Math.round((o.tasksDone / o.tasksTotal) * 100)}%</Badge>} />
-          <CardBody className="space-y-1">
-            {ONBOARD_TASKS.map((t, i) => {
-              const done = i < o.tasksDone;
-              return (
-                <div key={i} className="flex items-center gap-2.5 py-2 border-b last:border-0" style={{ borderColor: T.border }}>
-                  <div className="w-5 h-5 rounded-full flex items-center justify-center shrink-0" style={done ? { background: T.success } : { border: `2px solid ${T.borderStrong}` }}>
-                    {done && <Check size={12} color="#fff" />}
+              ) : (
+                <div className="flex items-center gap-1.5 cursor-pointer group" onClick={() => { setMRRDraft(String(o.dealMRR)); setEditMRR(true); }}>
+                  <span className="text-[20px] font-semibold" style={{ color: T.text }}>{fmtINR(o.dealMRR)}</span>
+                  <Pencil size={12} className="opacity-0 group-hover:opacity-100" style={{ color: T.text3 }} />
+                </div>
+              )}
+            </div>
+            <div className="rounded-lg border bg-white p-4" style={{ borderColor: T.border }}>
+              <div className="text-[11px] font-semibold uppercase tracking-wider mb-1" style={{ color: T.text3 }}>Tasks</div>
+              <div className="text-[20px] font-semibold" style={{ color: T.text }}>{tasksDone}/{tasksTotal}</div>
+            </div>
+            <div className="rounded-lg border bg-white p-4" style={{ borderColor: T.border }}>
+              <div className="text-[11px] font-semibold uppercase tracking-wider mb-1" style={{ color: T.text3 }}>Provider</div>
+              {editProvider ? (
+                <div className="flex items-center gap-1">
+                  <input autoFocus value={providerDraft} onChange={(e) => setProviderDraft(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === "Enter") { store.updateOnboardingField(o.id, "provider", providerDraft); setEditProvider(false); } if (e.key === "Escape") setEditProvider(false); }}
+                    className="border rounded px-2 py-0.5 text-[12px] w-24 outline-none" style={{ borderColor: T.primary }} />
+                  <button onClick={() => { store.updateOnboardingField(o.id, "provider", providerDraft); setEditProvider(false); }} style={{ color: T.success }}><Check size={14} /></button>
+                  <button onClick={() => setEditProvider(false)} style={{ color: T.text3 }}><X size={13} /></button>
+                </div>
+              ) : (
+                <div className="flex items-center gap-1 cursor-pointer group" onClick={() => { setProviderDraft(o.provider); setEditProvider(true); }} title={o.provider}>
+                  <span className="text-[13px] font-semibold truncate" style={{ color: T.text }}>{o.provider.split(" ")[0]}</span>
+                  <Pencil size={12} className="opacity-0 group-hover:opacity-100 shrink-0" style={{ color: T.text3 }} />
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Tabs */}
+          <Tabs tabs={["checklist", "activity"]} value={tab} onChange={setTab} />
+
+          {tab === "checklist" && (
+            <div className="space-y-4">
+              {ONBOARD_STAGES.map((s) => {
+                const items = stageByGroup[s];
+                if (!items?.length) return null;
+                const stageDone = items.filter((c) => c.completed).length;
+                return (
+                  <div key={s}>
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: T.text3 }}>{s}</span>
+                      <span className="text-[11px]" style={{ color: stageDone === items.length ? T.success : T.text3 }}>{stageDone}/{items.length}</span>
+                    </div>
+                    <div className="rounded-xl border overflow-hidden" style={{ borderColor: T.border }}>
+                      {items.map((c, idx) => (
+                        <label key={c.id} className="flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-slate-50 transition-colors"
+                          style={{ borderTop: idx > 0 ? `1px solid ${T.border}` : "none" }}>
+                          <input type="checkbox" checked={c.completed} onChange={() => store.toggleChecklistItem(o.id, c.id)}
+                            className="w-4 h-4 rounded cursor-pointer shrink-0" style={{ accentColor: T.primary }} />
+                          <span className="text-[13px] flex-1" style={{ color: c.completed ? T.text3 : T.text, textDecoration: c.completed ? "line-through" : "none" }}>
+                            {c.label}
+                          </span>
+                          {c.completed && <Check size={14} style={{ color: T.success }} />}
+                        </label>
+                      ))}
+                    </div>
                   </div>
-                  <span className="text-[13px]" style={{ color: done ? T.text3 : T.text, textDecoration: done ? "line-through" : "none" }}>{t}</span>
+                );
+              })}
+            </div>
+          )}
+
+          {tab === "activity" && (
+            <div className="space-y-2">
+              {(o.activity || []).length === 0 && <p className="text-[13px] text-center py-6" style={{ color: T.text3 }}>No activity yet</p>}
+              {(o.activity || []).map((a) => (
+                <div key={a.id} className="flex gap-3 py-2.5 border-b last:border-0" style={{ borderColor: T.border }}>
+                  <div className="w-7 h-7 rounded-full flex items-center justify-center shrink-0 text-[10px] font-bold" style={{ background: T.primarySoft, color: T.accentText }}>{a.who.charAt(0)}</div>
+                  <div>
+                    <div className="text-[13px]" style={{ color: T.text }}>{a.what}</div>
+                    <div className="text-[11px] mt-0.5" style={{ color: T.text3 }}>{a.who} · {a.when}</div>
+                  </div>
                 </div>
-              );
-            })}
-          </CardBody>
-        </Card>
-        <div className="flex gap-2">
-          <Button variant="primary" className="flex-1 justify-center" onClick={() => store.advanceOnboarding(o.id)}>
-            {stageIdx >= ONBOARD_STAGES.length - 1 ? <><Rocket size={15} /> Promote to live tenant</> : <><ArrowRight size={15} /> Advance to {ONBOARD_STAGES[stageIdx + 1]}</>}
-          </Button>
-          <Button onClick={() => store.notify("Kickoff call scheduled")}><Calendar size={15} /> Schedule call</Button>
+              ))}
+            </div>
+          )}
+
+          {/* Action buttons */}
+          <div className="flex gap-2 pt-2">
+            {stageIdx > 0 && (
+              <Button onClick={() => doChangeStage(ONBOARD_STAGES[stageIdx - 1])}>
+                <ArrowLeft size={14} /> Move back
+              </Button>
+            )}
+            {stageIdx < ONBOARD_STAGES.length - 1 ? (
+              <Button variant="primary" className="flex-1 justify-center"
+                disabled={o.currentStage === "Training" && missingGoLive.length > 0}
+                title={o.currentStage === "Training" && missingGoLive.length > 0 ? "Complete required Go-Live tasks first" : undefined}
+                onClick={() => doChangeStage(ONBOARD_STAGES[stageIdx + 1])}>
+                <ArrowRight size={15} /> Advance to {ONBOARD_STAGES[stageIdx + 1]}
+              </Button>
+            ) : (
+              <Button variant="primary" className="flex-1 justify-center" onClick={() => store.notify(`${o.clientName} promoted to live tenant`)}>
+                <Rocket size={15} /> Promote to live tenant
+              </Button>
+            )}
+          </div>
+          {o.currentStage === "Training" && missingGoLive.length > 0 && (
+            <p className="text-[12px] text-center" style={{ color: T.warning }}>
+              ⚠ Complete {missingGoLive.length} required Go-Live task{missingGoLive.length !== 1 ? "s" : ""} before advancing
+            </p>
+          )}
         </div>
-      </div>
-    </Drawer>
+      </Drawer>
+
+      <ConfirmAdvanceModal
+        open={!!confirmState}
+        onClose={() => setConfirmState(null)}
+        onConfirm={confirmAdvance}
+        clientName={o.clientName}
+        fromStage={o.currentStage}
+        toStage={confirmState?.toStage}
+        incompleteCount={confirmState?.incompleteCount}
+      />
+    </>
   );
 }
 
 function OnboardingPage() {
   const store = useStore();
   const [detail, setDetail] = useState(null);
+  const [dragId, setDragId] = useState(null);
+  const [dragOver, setDragOver] = useState(null);
   const stageTone = { Kickoff: "gray", Configuring: "info", "Data Import": "purple", Training: "warning", "Go-Live": "success" };
-  const pipelineMRR = store.onboarding.reduce((s, o) => s + o.mrr, 0);
+
+  const pipelineMRR = store.onboarding.reduce((s, o) => s + o.dealMRR, 0);
+  const goLiveCount = store.onboarding.filter((o) => o.currentStage === "Go-Live").length;
+
+  const handleDrop = (stage) => {
+    if (dragId == null) return;
+    const o = store.onboarding.find((x) => x.id === dragId);
+    if (!o || o.currentStage === stage) { setDragId(null); setDragOver(null); return; }
+    const fromIdx = ONBOARD_STAGES.indexOf(o.currentStage);
+    const toIdx = ONBOARD_STAGES.indexOf(stage);
+    const moving = toIdx > fromIdx;
+    const incompleteInCurrent = o.checklist.filter((c) => c.stage === o.currentStage && !c.completed).length;
+    if (moving && incompleteInCurrent > 0) {
+      // For drag-drop, confirm inline via simple confirm dialog (reuse same state mechanism via setDetail then confirm)
+      if (!window.confirm(`${incompleteInCurrent} task(s) in "${o.currentStage}" aren't done — advance anyway?`)) { setDragId(null); setDragOver(null); return; }
+    }
+    store.updateOnboardingStage(dragId, stage);
+    setDragId(null);
+    setDragOver(null);
+  };
 
   return (
     <>
@@ -1515,39 +1784,60 @@ function OnboardingPage() {
         actions={<Button variant="primary" onClick={() => store.notify("New onboarding started")}><Plus size={15} /> Start Onboarding</Button>} />
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
         <Kpi label="In Pipeline" value={String(store.onboarding.length)} sub="active onboardings" />
-        <Kpi label="Pipeline MRR" value={fmtINR(pipelineMRR)} sub="on go-live" trend="pos" />
+        <Kpi label="Pipeline MRR" value={fmtINR(pipelineMRR)} sub="combined deal value" trend="pos" />
         <Kpi label="Avg Time to Live" value="16 days" sub="target 21" trend="pos" />
-        <Kpi label="Go-Live Ready" value={String(store.onboarding.filter((o) => o.stage === "Go-Live").length)} sub="awaiting sign-off" trend="warn" />
+        <Kpi label="Go-Live Ready" value={String(goLiveCount)} sub="awaiting sign-off" trend={goLiveCount > 0 ? "warn" : undefined} />
       </div>
-      {/* kanban */}
+      {/* Kanban board */}
       <div className="grid gap-3" style={{ gridTemplateColumns: `repeat(${ONBOARD_STAGES.length}, minmax(200px, 1fr))`, overflowX: "auto" }}>
         {ONBOARD_STAGES.map((stage) => {
-          const items = store.onboarding.filter((o) => o.stage === stage);
+          const items = store.onboarding.filter((o) => o.currentStage === stage);
+          const isOver = dragOver === stage;
           return (
-            <div key={stage} className="rounded-xl border" style={{ borderColor: T.border, background: T.subtle }}>
+            <div key={stage} className="rounded-xl border transition-colors"
+              style={{ borderColor: isOver ? T.primary : T.border, background: isOver ? T.primarySoft : T.subtle }}
+              onDragOver={(e) => { e.preventDefault(); setDragOver(stage); }}
+              onDragLeave={() => setDragOver(null)}
+              onDrop={() => handleDrop(stage)}>
               <div className="flex items-center justify-between px-3 py-2.5 border-b" style={{ borderColor: T.border }}>
                 <span className="text-[12px] font-semibold" style={{ color: T.text }}>{stage}</span>
                 <Badge tone={stageTone[stage]}>{items.length}</Badge>
               </div>
               <div className="p-2 space-y-2 min-h-[120px]">
-                {items.map((o) => (
-                  <div key={o.id} onClick={() => setDetail(o)} className="rounded-lg border bg-white p-3 cursor-pointer hover:shadow-md transition-shadow" style={{ borderColor: T.border }}>
-                    <div className="flex items-center gap-2 mb-2">
-                      <Avatar name={o.client} tone={o.industry === "Clinic" ? "purple" : "brand"} size={24} />
-                      <span className="text-[13px] font-medium leading-tight" style={{ color: T.text }}>{o.client}</span>
+                {items.map((o) => {
+                  const done = o.checklist.filter((c) => c.completed).length;
+                  const total = o.checklist.length;
+                  return (
+                    <div key={o.id}
+                      draggable
+                      onDragStart={() => setDragId(o.id)}
+                      onDragEnd={() => { setDragId(null); setDragOver(null); }}
+                      onClick={() => setDetail(o)}
+                      className="rounded-lg border bg-white p-3 cursor-pointer hover:shadow-md transition-shadow"
+                      style={{ borderColor: T.border, opacity: dragId === o.id ? 0.4 : 1 }}>
+                      <div className="flex items-center gap-2 mb-1.5">
+                        <GripVertical size={12} style={{ color: T.text3 }} className="shrink-0 cursor-grab" />
+                        <Avatar name={o.clientName} tone={o.industry === "Clinic" ? "purple" : "brand"} size={22} />
+                        <span className="text-[13px] font-medium leading-tight flex-1 truncate" style={{ color: T.text }}>{o.clientName}</span>
+                      </div>
+                      <div className="text-[11px] mb-2" style={{ color: T.text2 }}>{o.industry} · {o.owner}</div>
+                      <div className="h-1.5 rounded-full overflow-hidden mb-1.5" style={{ background: "#E4E7F0" }}>
+                        <div className="h-full rounded-full" style={{ width: `${(done / total) * 100}%`, background: done === total ? T.success : T.primary }} />
+                      </div>
+                      <div className="flex items-center justify-between text-[11px]" style={{ color: T.text3 }}>
+                        <span>{done}/{total} tasks</span>
+                        <span className="font-medium" style={{ color: T.text2 }}>{fmtINR(o.dealMRR)}</span>
+                      </div>
                     </div>
-                    <div className="text-[11px] mb-2" style={{ color: T.text2 }}>{o.industry} · {o.am}</div>
-                    <div className="h-1.5 rounded-full overflow-hidden mb-1.5" style={{ background: "#E4E7F0" }}><div className="h-full rounded-full" style={{ width: `${(o.tasksDone / o.tasksTotal) * 100}%`, background: T.primary }} /></div>
-                    <div className="flex items-center justify-between text-[11px]" style={{ color: T.text3 }}><span>{o.tasksDone}/{o.tasksTotal} tasks</span><span className="font-medium" style={{ color: T.text2 }}>{fmtINR(o.mrr)}</span></div>
-                  </div>
-                ))}
-                {!items.length && <div className="text-center text-[11px] py-6" style={{ color: T.text3 }}>Empty</div>}
+                  );
+                })}
+                {!items.length && <div className="text-center text-[11px] py-6" style={{ color: T.text3 }}>Drop here</div>}
               </div>
             </div>
           );
         })}
       </div>
-      <OnboardingDetail item={detail} onClose={() => setDetail(null)} />
+      <OnboardingDetail item={detail ? store.onboarding.find((x) => x.id === detail.id) || detail : null} onClose={() => setDetail(null)} />
     </>
   );
 }
@@ -3565,6 +3855,124 @@ function SubsOverview() {
   );
 }
 
+function SubsRevenue() {
+  const store = useStore();
+  const active = store.subscriptions.filter((s) => s.status === "Active");
+
+  // MRR / ARR
+  const totalMRR = active.reduce((s, x) => s + (x.billingCycle === "Monthly" ? x.finalPrice : Math.round(x.finalPrice / 12)), 0);
+  const totalARR = totalMRR * 12;
+  const discountLoss = active.reduce((s, x) => s + (x.subtotal - x.finalPrice), 0);
+  const netRevenue = active.reduce((s, x) => s + x.finalPrice, 0);
+
+  // By billing cycle
+  const monthlyCount = active.filter((s) => s.billingCycle === "Monthly").length;
+  const yearlyCount = active.filter((s) => s.billingCycle === "Yearly").length;
+  const monthlyMRR = active.filter((s) => s.billingCycle === "Monthly").reduce((s, x) => s + x.finalPrice, 0);
+  const yearlyMRR = active.filter((s) => s.billingCycle === "Yearly").reduce((s, x) => s + Math.round(x.finalPrice / 12), 0);
+
+  // Revenue by plan (all subs, not just active)
+  const planRevenue = store.spPlans.filter((p) => p.status !== "Archived").map((p) => {
+    const subs = store.subscriptions.filter((s) => s.planId === p.id && s.status === "Active");
+    return { label: p.planName, value: subs.reduce((s, x) => s + x.finalPrice, 0), count: subs.length, type: p.planType };
+  }).filter((r) => r.value > 0).sort((a, b) => b.value - a.value);
+
+  // Top clients by revenue
+  const topClients = [...active].sort((a, b) => b.finalPrice - a.finalPrice).slice(0, 8);
+
+  // Simulated 6-month MRR trend (using totalMRR as current, work backwards with small variance)
+  const months = ["Dec", "Jan", "Feb", "Mar", "Apr", "May"];
+  const trendBase = totalMRR;
+  const trend = [0.78, 0.82, 0.88, 0.91, 0.96, 1.0].map((f, i) => ({ month: months[i], value: Math.round(trendBase * f) }));
+  const trendMax = Math.max(...trend.map((t) => t.value));
+
+  return (
+    <div className="space-y-4">
+      {/* KPI row */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <Kpi label="MRR" value={fmtINR(totalMRR)} sub="Monthly recurring" trend="pos" />
+        <Kpi label="ARR" value={fmtLakh(totalARR)} sub="Annualized run-rate" trend="pos" />
+        <Kpi label="Net Collected" value={fmtINR(netRevenue)} sub="across all active subs" />
+        <Kpi label="Discount Loss" value={fmtINR(discountLoss)} sub="revenue given away" trend="warn" />
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {/* MRR Trend */}
+        <Card><CardHeader title="MRR Trend · Last 6 months" action={<span className="text-[12px] font-semibold" style={{ color: T.success }}>+{Math.round(((trend[5].value - trend[0].value) / trend[0].value) * 100)}% growth</span>} />
+          <CardBody>
+            <div className="flex items-end gap-2 h-28">
+              {trend.map((t) => (
+                <div key={t.month} className="flex-1 flex flex-col items-center gap-1">
+                  <div className="text-[10px] font-semibold" style={{ color: T.primary }}>{fmtINR(t.value)}</div>
+                  <div className="w-full rounded-t" style={{ height: `${Math.round((t.value / trendMax) * 72)}px`, background: t.month === "May" ? T.primary : T.ring }} />
+                  <div className="text-[11px]" style={{ color: T.text3 }}>{t.month}</div>
+                </div>
+              ))}
+            </div>
+          </CardBody>
+        </Card>
+
+        {/* Billing cycle split */}
+        <Card><CardHeader title="Billing Cycle Split" />
+          <CardBody className="space-y-3">
+            <div className="grid grid-cols-2 gap-3">
+              <div className="rounded-lg p-3" style={{ background: T.primarySoft }}>
+                <div className="text-[11px] font-semibold uppercase tracking-wider mb-1" style={{ color: T.text3 }}>Monthly</div>
+                <div className="text-xl font-bold" style={{ color: T.primary }}>{fmtINR(monthlyMRR)}<span className="text-[11px] font-normal">/mo</span></div>
+                <div className="text-[12px] mt-0.5" style={{ color: T.text2 }}>{monthlyCount} subscriptions</div>
+              </div>
+              <div className="rounded-lg p-3" style={{ background: "#F3F0FF" }}>
+                <div className="text-[11px] font-semibold uppercase tracking-wider mb-1" style={{ color: T.text3 }}>Yearly</div>
+                <div className="text-xl font-bold" style={{ color: T.purple }}>{fmtINR(yearlyMRR)}<span className="text-[11px] font-normal">/mo equiv</span></div>
+                <div className="text-[12px] mt-0.5" style={{ color: T.text2 }}>{yearlyCount} subscriptions</div>
+              </div>
+            </div>
+            {totalMRR > 0 && (
+              <div>
+                <div className="flex justify-between text-[11px] mb-1" style={{ color: T.text3 }}>
+                  <span>Monthly {Math.round((monthlyMRR / totalMRR) * 100)}%</span>
+                  <span>Yearly {Math.round((yearlyMRR / totalMRR) * 100)}%</span>
+                </div>
+                <div className="h-2 rounded-full flex overflow-hidden" style={{ background: T.border }}>
+                  <div className="h-full rounded-l-full" style={{ width: `${Math.round((monthlyMRR / totalMRR) * 100)}%`, background: T.primary }} />
+                  <div className="h-full rounded-r-full flex-1" style={{ background: T.purple }} />
+                </div>
+              </div>
+            )}
+          </CardBody>
+        </Card>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {/* Revenue by plan */}
+        <Card><CardHeader title="Revenue by Plan" />
+          <CardBody>
+            <BarList max={Math.max(...planRevenue.map((r) => r.value), 1)} fmt={fmtINR}
+              rows={planRevenue.map((r) => ({ label: `${r.label} (${r.count})`, value: r.value, color: r.type === "Published" ? T.primary : T.purple }))} />
+          </CardBody>
+        </Card>
+
+        {/* Top clients by revenue */}
+        <Card><CardHeader title="Top Clients by Revenue" />
+          <CardBody>
+            <Table head={["Client", "Plan", "Cycle", "MRR"]}>
+              {topClients.map((s) => (
+                <tr key={s.id} className="hover:bg-[#F8F9FC]">
+                  <Td className="font-medium text-[13px]">{s.companyName}</Td>
+                  <Td className="text-xs" style={{ color: T.text2 }}>{s.planName}</Td>
+                  <Td><Badge tone={s.billingCycle === "Yearly" ? "purple" : "brand"}>{s.billingCycle}</Badge></Td>
+                  <Td className="font-semibold" style={{ color: T.primary }}>{fmtINR(s.billingCycle === "Monthly" ? s.finalPrice : Math.round(s.finalPrice / 12))}</Td>
+                </tr>
+              ))}
+              {!topClients.length && <tr><Td colSpan={4} className="text-center py-8" style={{ color: T.text3 }}>No active subscriptions</Td></tr>}
+            </Table>
+          </CardBody>
+        </Card>
+      </div>
+    </div>
+  );
+}
+
 /* --- MAIN SUBSCRIPTIONS & PLANS PAGE (tab container) --- */
 function SubsPlansPage() {
   const [tab, setTab] = useState("Overview");
@@ -3584,7 +3992,7 @@ function SubsPlansPage() {
         <div className="flex-1 overflow-y-auto">
           {tab === "Overview" && <SubsOverview />}
           {tab === "Addon Pricing" && <AddonPricingPage />}
-          {tab === "Revenue" && <SubsOverview />}
+          {tab === "Revenue" && <SubsRevenue />}
         </div>
       )}
     </div>
