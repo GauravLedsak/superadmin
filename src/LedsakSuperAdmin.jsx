@@ -14,6 +14,7 @@ import {
   Copy, Archive, Trash2, Hash, IndianRupee, Package, Percent, Tag,
   History, DollarSign, BarChart2, PieChart, Receipt, UserCog, LogOut,
   PanelLeftClose, PanelLeft, GripVertical, ArrowUpDown, Star, RotateCcw,
+  SlidersHorizontal,
 } from "lucide-react";
 import ledsakLogo from "./assets/ledsak-logo.svg";
 
@@ -760,10 +761,10 @@ function Kpi({ label, value, sub, trend }) {
   const c = trend === "pos" ? T.success : trend === "neg" ? T.danger : trend === "warn" ? T.warning : T.text2;
   const Ic = trend === "pos" ? ArrowUpRight : trend === "neg" ? ArrowDownRight : null;
   return (
-    <div className="rounded-lg border bg-white transition-all hover:-translate-y-0.5" style={{ borderColor: T.border, boxShadow: "0 1px 2px rgba(26,31,54,.05)", padding: "20px 22px" }}>
+    <div className="rounded-xl border bg-white transition-all hover:-translate-y-0.5" style={{ borderColor: T.border, boxShadow: "0 2px 8px rgba(26,31,54,.07)", padding: "20px 16px" }}>
       <div className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: T.text3 }}>{label}</div>
-      <div className="text-[26px] leading-none font-semibold mt-3 tracking-tight" style={{ color: T.text }}>{value}</div>
-      {sub && <div className="text-xs mt-2.5 flex items-center gap-1" style={{ color: c }}>{Ic && <Ic size={13} />}{sub}</div>}
+      <div className="text-[28px] leading-none font-bold mt-2 tracking-tight" style={{ color: T.text }}>{value}</div>
+      {sub && <div className="text-xs mt-2 flex items-center gap-1" style={{ color: c }}>{Ic && <Ic size={13} />}{sub}</div>}
     </div>
   );
 }
@@ -1532,7 +1533,7 @@ function ClientsPage() {
               <Td>{menuFor(c)}</Td>
             </tr>
           ))}
-          {!rows.length && <tr><Td colSpan={14} className="text-center py-10" style={{ color: T.text3 }}>No tenants match these filters</Td></tr>}
+          {!rows.length && <tr><Td colSpan={14} className="text-center py-10" style={{ color: T.text3 }}>No clients match these filters</Td></tr>}
         </Table>
       </Card>
       <Tenant360 tenant={selected} onClose={() => setSelected(null)} starred={selected ? starred.has(selected.id) : false} onToggleStar={toggleStar} />
@@ -5077,7 +5078,7 @@ function Sidebar({ active, onNav, collapsed }) {
   const [open, setOpen] = useState(() => Object.fromEntries(NAV.map((g) => [g.section, true])));
   const toggle = (s) => setOpen((o) => ({ ...o, [s]: !o[s] }));
   return (
-    <aside className={cx("shrink-0 flex flex-col sticky top-0 h-screen transition-[width] duration-150", collapsed ? "w-[72px]" : "w-[248px]")} style={{ background: T.sidebar, overflow: "hidden" }}>
+    <aside className={cx("shrink-0 flex flex-col h-full transition-[width] duration-150", collapsed ? "w-[72px]" : "w-[248px]")} style={{ background: T.sidebar, overflow: "hidden", borderRadius: "0 16px 16px 0", boxShadow: "0 4px 24px rgba(0,0,0,.18)" }}>
       {/* Brand — fixed, never scrolls */}
       <div className="flex items-center justify-center px-5 py-[18px] border-b shrink-0" style={{ borderColor: T.sidebarHover }}>
         {collapsed ? (
@@ -5155,10 +5156,10 @@ function ProfileDropdown({ onGo }) {
   return (
     <div className="relative">
       <button onClick={() => setOpen((o) => !o)} onBlur={() => setTimeout(() => setOpen(false), 200)}
-        className="flex items-center gap-2 px-2 py-1.5 rounded-lg border hover:bg-slate-50 transition" style={{ borderColor: T.border }}>
-        <div className="w-7 h-7 rounded-full flex items-center justify-center font-semibold text-[11px] text-white" style={{ background: T.primary }}>SK</div>
-        <div className="text-left hidden sm:block"><div className="text-[12px] font-medium leading-tight" style={{ color: T.text }}>Saif Khan</div><div className="text-[10px]" style={{ color: T.text3 }}>Super Admin</div></div>
-        <ChevronDown size={14} style={{ color: T.text3 }} />
+        className="flex items-center gap-2 px-2 py-1.5 rounded-lg transition" style={{ background: "rgba(255,255,255,.12)" }}>
+        <div className="w-7 h-7 rounded-full flex items-center justify-center font-semibold text-[11px]" style={{ background: "#fff", color: T.primary }}>SK</div>
+        <div className="text-left hidden sm:block"><div className="text-[12px] font-medium leading-tight text-white">Saif Khan</div><div className="text-[10px]" style={{ color: "rgba(255,255,255,.6)" }}>Super Admin</div></div>
+        <ChevronDown size={14} style={{ color: "rgba(255,255,255,.6)" }} />
       </button>
       {open && (
         <div className="absolute right-0 top-11 z-30 w-52 rounded-xl border bg-white shadow-xl py-1" style={{ borderColor: T.border }} onMouseDown={(e) => e.stopPropagation()}>
@@ -5196,14 +5197,14 @@ function Topbar({ onGo, active, collapsed, onToggleCollapse }) {
     window.location.reload();
   };
   return (
-    <div className="sticky top-0 z-20 flex items-center gap-4 px-7 py-3 bg-white border-b" style={{ borderColor: T.border, boxShadow: "0 1px 2px rgba(26,31,54,.05)" }}>
-      <button onClick={onToggleCollapse} title={collapsed ? "Expand sidebar" : "Collapse sidebar"} className="w-8 h-8 rounded-lg border flex items-center justify-center hover:bg-slate-50 shrink-0" style={{ borderColor: T.border, color: T.text2 }}>
+    <div className="flex items-center gap-4 px-5 py-3" style={{ background: T.sidebar, borderRadius: 14, boxShadow: "0 4px 24px rgba(0,0,0,.18)", color: "#fff" }}>
+      <button onClick={onToggleCollapse} title={collapsed ? "Expand sidebar" : "Collapse sidebar"} className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: "rgba(255,255,255,.12)", color: "#fff" }}>
         {collapsed ? <PanelLeft size={16} /> : <PanelLeftClose size={16} />}
       </button>
-      <div className="text-[17px] font-bold shrink-0" style={{ color: T.text }}>{pageTitle}</div>
-      <div className="hidden md:flex items-center gap-1.5 text-[12px] pl-2 border-l" style={{ color: T.text3, borderColor: T.border }}>
+      <div className="text-[17px] font-bold shrink-0" style={{ color: "#fff" }}>{pageTitle}</div>
+      <div className="hidden md:flex items-center gap-1.5 text-[12px] pl-2 border-l" style={{ color: "rgba(255,255,255,.6)", borderColor: "rgba(255,255,255,.2)" }}>
         <RefreshCw size={13} /> Last Synced — {lastSynced}
-        <button onClick={() => setResetConfirm(true)} title="Reset demo data — restores original seed data everywhere" className="ml-0.5 p-1 rounded hover:bg-slate-100" style={{ color: T.text3 }}><RotateCcw size={12} /></button>
+        <button onClick={() => setResetConfirm(true)} title="Reset demo data" className="ml-0.5 p-1 rounded" style={{ color: "rgba(255,255,255,.5)" }}><RotateCcw size={12} /></button>
       </div>
       <Modal open={resetConfirm} onClose={() => setResetConfirm(false)} title="Reset Demo Data"
         footer={<><Button onClick={() => setResetConfirm(false)}>Cancel</Button><Button variant="danger" onClick={handleResetAllDemoData}><RotateCcw size={13} />Reset everything</Button></>}>
@@ -5215,14 +5216,14 @@ function Topbar({ onGo, active, collapsed, onToggleCollapse }) {
         </div>
       </Modal>
       <div className="flex items-center gap-2.5 ml-auto">
-        <label className="flex items-center gap-2 text-[12px] font-medium cursor-pointer select-none" style={{ color: T.text2 }}>
+        <label className="flex items-center gap-2 text-[12px] font-medium cursor-pointer select-none" style={{ color: "rgba(255,255,255,.85)" }}>
           <span className="hidden sm:inline">{checkedOut ? "Checked Out" : "Checked In"}</span>
-          <button type="button" role="switch" aria-checked={checkedOut} onClick={() => setCheckedOut((c) => !c)} className="w-9 h-5 rounded-full relative transition-colors" style={{ background: checkedOut ? T.primary : T.borderStrong }}>
-            <span className="absolute top-0.5 w-4 h-4 rounded-full bg-white transition-all" style={{ left: checkedOut ? 18 : 2 }} />
+          <button type="button" role="switch" aria-checked={checkedOut} onClick={() => setCheckedOut((c) => !c)} className="w-9 h-5 rounded-full relative transition-colors" style={{ background: checkedOut ? "#fff" : "rgba(255,255,255,.25)" }}>
+            <span className="absolute top-0.5 w-4 h-4 rounded-full transition-all" style={{ background: checkedOut ? T.primary : "#fff", left: checkedOut ? 18 : 2 }} />
           </button>
         </label>
         <div className="relative">
-          <button onClick={() => setNotifOpen((o) => !o)} onBlur={() => setTimeout(() => setNotifOpen(false), 200)} className="relative w-9 h-9 rounded-lg border bg-white flex items-center justify-center hover:bg-slate-50" style={{ borderColor: T.border, color: T.text2 }}>
+          <button onClick={() => setNotifOpen((o) => !o)} onBlur={() => setTimeout(() => setNotifOpen(false), 200)} className="relative w-9 h-9 rounded-lg flex items-center justify-center" style={{ background: "rgba(255,255,255,.12)", color: "#fff" }}>
             <Bell size={17} />{unread > 0 && <span className="absolute top-1 right-1 min-w-[15px] h-[15px] px-1 rounded-full text-[9px] font-bold text-white flex items-center justify-center" style={{ background: T.danger }}>{unread}</span>}
           </button>
           <NotifPanel open={notifOpen} onClose={() => setNotifOpen(false)} onGo={onGo} />
@@ -5288,11 +5289,16 @@ function Shell() {
   return (
     <div className="flex min-h-screen font-sans" style={{ background: T.bg, color: T.text }}>
       <style>{`@keyframes slideIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}} aside nav::-webkit-scrollbar{width:4px} aside nav::-webkit-scrollbar-thumb{background:${T.sidebarHover};border-radius:4px}`}</style>
-      <Sidebar active={active} onNav={go} collapsed={sidebarCollapsed} />
-      <main className="flex-1 min-w-0 h-screen overflow-hidden flex flex-col">
+      <div className="shrink-0 py-3" style={{ position: "sticky", top: 0, height: "100vh" }}>
+        <Sidebar active={active} onNav={go} collapsed={sidebarCollapsed} />
+      </div>
+      <main className="flex-1 min-w-0 flex flex-col min-h-screen">
         <ImpersonationBanner />
-        <Topbar onGo={go} active={active} collapsed={sidebarCollapsed} onToggleCollapse={() => setSidebarCollapsed((c) => !c)} />
-        <div className={cx("flex-1 min-h-0 px-7 py-6", FIXED_HEIGHT_PAGES.has(active) ? "overflow-hidden flex flex-col" : "overflow-y-auto")}>{page}</div>
+        {/* Floating topbar */}
+        <div className="px-3 pt-3 shrink-0">
+          <Topbar onGo={go} active={active} collapsed={sidebarCollapsed} onToggleCollapse={() => setSidebarCollapsed((c) => !c)} />
+        </div>
+        <div className={cx("flex-1 min-h-0 px-3 py-3", FIXED_HEIGHT_PAGES.has(active) ? "overflow-hidden flex flex-col" : "overflow-y-auto")}>{page}</div>
       </main>
       <Toast msg={store.toast} />
       <Tenant360 tenant={tenantForCs} onClose={() => setTenantForCs(null)} />
