@@ -3351,7 +3351,6 @@ function LeadsPage({ go }) {
   const [dupModal, setDupModal] = useState(null); // lead
   const [reassignLead, setReassignLead] = useState(null); // lead
   const [reprocessing, setReprocessing] = useState(false);
-  const [resetConfirm, setResetConfirm] = useState(false);
 
   // Check if current user has active PII grant
   const now = Date.now();
@@ -3486,22 +3485,6 @@ function LeadsPage({ go }) {
     setPIIGrants((prev) => { const next = [grant, ...prev]; savePIIGrants(next); return next; });
   };
 
-  // Wipes local mutations and restores the original seed leads/audit/PII-grant state — this
-  // is a demo with static seed data and no backend generating new failures over time, so this
-  // is the only way to get failed/duplicate/partial leads back once you've resolved them all.
-  const handleResetDemo = () => {
-    localStorage.removeItem(LEADS_STORAGE_KEY);
-    localStorage.removeItem(LEADS_AUDIT_KEY);
-    localStorage.removeItem(PII_GRANTS_KEY);
-    setLeadsRaw(SEED_LEADS);
-    setAudit([]);
-    setPIIGrants([]);
-    setResetConfirm(false);
-    setDetailLead(null);
-    sel.clear();
-    store.notify("Demo data reset to seed state");
-  };
-
   const handleReassignTenant = (id, tenant) => {
     const t = SEED_CLIENTS.find((c) => c.name === tenant);
     setLeads((prev) => prev.map((l) => l.id !== id ? l : { ...l, tenant, tenantId: t ? t.id : l.tenantId, history: [...l.history, { action: `Reassigned from ${l.tenant} to ${tenant}`, by: ADMIN, when: new Date().toLocaleString("en-IN") }] }));
@@ -3562,7 +3545,6 @@ function LeadsPage({ go }) {
           )}
           <Button onClick={handleExport}><Download size={14} />Export {filtered.length > 0 ? `(${filtered.length})` : ""}</Button>
           <button onClick={() => setRefreshTick((n) => n + 1)} className="p-2 rounded-lg border hover:bg-slate-50" title="Refresh" style={{ borderColor: T.border }}><RefreshCw size={14} style={{ color: T.text3 }} /></button>
-          <button onClick={() => setResetConfirm(true)} className="p-2 rounded-lg border hover:bg-slate-50" title="Reset demo data — restores original seed leads" style={{ borderColor: T.border }}><RotateCcw size={14} style={{ color: T.text3 }} /></button>
         </>} />
 
       {/* KPI tiles — clickable to filter */}
@@ -3764,19 +3746,6 @@ function LeadsPage({ go }) {
           </p>
           <div className="mt-3 rounded-lg px-3 py-2 text-[12px]" style={{ background: T.warningSoft, color: "#92400E" }}>
             ⚠ Typically caused by API auth errors — ensure the source token is refreshed before reprocessing.
-          </div>
-        </Modal>
-      )}
-
-      {/* Reset demo data confirm */}
-      {resetConfirm && (
-        <Modal open={resetConfirm} onClose={() => setResetConfirm(false)} title="Reset Demo Data"
-          footer={<><Button onClick={() => setResetConfirm(false)}>Cancel</Button><Button variant="danger" onClick={handleResetDemo}><RotateCcw size={13} />Reset to seed data</Button></>}>
-          <p className="text-[13px]" style={{ color: T.text2 }}>
-            This restores the original 15 seed leads — including the 3 that start as <strong style={{ color: T.danger }}>failed</strong> and 2 as <strong style={{ color: T.purple }}>duplicate</strong> — and clears every local mutation, the leads audit trail, and any active PII access grant.
-          </p>
-          <div className="mt-3 rounded-lg px-3 py-2 text-[12px]" style={{ background: T.warningSoft, color: "#92400E" }}>
-            This is a demo-data reset only — it doesn't touch the rest of the app, and can't be undone.
           </div>
         </Modal>
       )}
@@ -5210,13 +5179,22 @@ function ProfileDropdown({ onGo }) {
    checked-in/out toggle, profile. No global search — search now lives
    only on the individual pages that need it (e.g. Tenants/Clients).
    ============================================================ */
+// Every localStorage key any page in the app writes to — a single source of truth so the
+// global "reset demo data" action (and nothing else) knows what it's allowed to wipe.
+const ALL_DEMO_STORAGE_KEYS = [ONBOARD_STORAGE_KEY, LEADS_STORAGE_KEY, LEADS_AUDIT_KEY, PII_GRANTS_KEY];
+
 function Topbar({ onGo, active, collapsed, onToggleCollapse }) {
   const store = useStore();
   const [notifOpen, setNotifOpen] = useState(false);
   const [checkedOut, setCheckedOut] = useState(true);
+  const [resetConfirm, setResetConfirm] = useState(false);
   const [lastSynced] = useState(() => new Date().toLocaleString("en-GB", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: true }).replace(",", ""));
   const unread = store.notifs.filter((n) => !n.read).length;
   const pageTitle = PAGE_TITLES[active] || "Dashboard";
+  const handleResetAllDemoData = () => {
+    ALL_DEMO_STORAGE_KEYS.forEach((k) => localStorage.removeItem(k));
+    window.location.reload();
+  };
   return (
     <div className="sticky top-0 z-20 flex items-center gap-4 px-7 py-3 bg-white border-b" style={{ borderColor: T.border, boxShadow: "0 1px 2px rgba(26,31,54,.05)" }}>
       <button onClick={onToggleCollapse} title={collapsed ? "Expand sidebar" : "Collapse sidebar"} className="w-8 h-8 rounded-lg border flex items-center justify-center hover:bg-slate-50 shrink-0" style={{ borderColor: T.border, color: T.text2 }}>
@@ -5225,7 +5203,17 @@ function Topbar({ onGo, active, collapsed, onToggleCollapse }) {
       <div className="text-[17px] font-bold shrink-0" style={{ color: T.text }}>{pageTitle}</div>
       <div className="hidden md:flex items-center gap-1.5 text-[12px] pl-2 border-l" style={{ color: T.text3, borderColor: T.border }}>
         <RefreshCw size={13} /> Last Synced — {lastSynced}
+        <button onClick={() => setResetConfirm(true)} title="Reset demo data — restores original seed data everywhere" className="ml-0.5 p-1 rounded hover:bg-slate-100" style={{ color: T.text3 }}><RotateCcw size={12} /></button>
       </div>
+      <Modal open={resetConfirm} onClose={() => setResetConfirm(false)} title="Reset Demo Data"
+        footer={<><Button onClick={() => setResetConfirm(false)}>Cancel</Button><Button variant="danger" onClick={handleResetAllDemoData}><RotateCcw size={13} />Reset everything</Button></>}>
+        <p className="text-[13px]" style={{ color: T.text2 }}>
+          This restores every module's original seed data — Lead & Record Management (including the leads that start <strong style={{ color: T.danger }}>failed</strong> or <strong style={{ color: T.purple }}>duplicate</strong>) and Client Onboarding — and clears all local mutations, audit trails, and PII access grants. The page will reload.
+        </p>
+        <div className="mt-3 rounded-lg px-3 py-2 text-[12px]" style={{ background: T.warningSoft, color: "#92400E" }}>
+          This is a demo-data reset only — it doesn't touch the rest of the app, and can't be undone.
+        </div>
+      </Modal>
       <div className="flex items-center gap-2.5 ml-auto">
         <label className="flex items-center gap-2 text-[12px] font-medium cursor-pointer select-none" style={{ color: T.text2 }}>
           <span className="hidden sm:inline">{checkedOut ? "Checked Out" : "Checked In"}</span>
