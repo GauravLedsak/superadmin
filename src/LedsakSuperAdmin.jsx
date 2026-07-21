@@ -2918,21 +2918,39 @@ function SupportPage() {
 /* ============================================================
    INTEGRATIONS — with reconnect action tied to feed health
    ============================================================ */
-function IntegrationsPage() {
+function IntegrationsPage({ filter }) {
   const store = useStore();
   const brokenTenants = store.clients.filter((c) => !c.providerOk);
+  const leadHealth = computeIntegrationHealth(loadLeads() || SEED_LEADS);
+  const indiaMartHealth = leadHealth.find((h) => h.source === "IndiaMART");
+  const [filterDismissed, setFilterDismissed] = useState(false);
+  const activeFilter = !filterDismissed && filter?.source ? filter : null;
   const integ = [
     { name: "CarWale", cat: "Lead provider", icon: Car, tenants: 42, ok: brokenTenants.every((t) => t.provider !== "CarWale") },
     { name: "CarDekho", cat: "Lead provider", icon: Car, tenants: 38, ok: true },
+    { name: "IndiaMART", cat: "Lead provider", icon: Globe, tenants: indiaMartHealth?.total || 0, ok: indiaMartHealth?.status === "Healthy" },
     { name: "WhatsApp Business", cat: "Messaging", icon: MessageSquare, tenants: 210, ok: true },
     { name: "Cliniceo EMR", cat: "Healthcare", icon: Stethoscope, tenants: 12, ok: true },
     { name: "Razorpay", cat: "Payments", icon: CreditCard, tenants: 56, ok: true },
     { name: "Dealer DMS", cat: "Automotive", icon: Server, tenants: 1, ok: true, beta: true },
   ];
+  // Deep-linked from Lead & Record Mgmt: bump the matching integration to the top so it's
+  // immediately visible without scrolling or hunting through the grid.
+  const matches = (it) => activeFilter && (it.name === activeFilter.source || it.name.startsWith(activeFilter.source));
+  const sortedInteg = activeFilter ? [...integ].sort((a, b) => (matches(b) ? 1 : 0) - (matches(a) ? 1 : 0)) : integ;
   return (
     <>
       <PageHeader title="Integrations" desc="Lead providers, messaging, payments and vertical connectors"
         actions={<Button variant="primary" onClick={() => store.notify("Integration added")}><Plus size={15} /> Add Integration</Button>} />
+      {activeFilter && (
+        <div className="flex items-center gap-2.5 p-3 rounded-lg mb-4" style={{ background: T.primarySoft, border: `1px solid ${T.primary}` }}>
+          <Filter size={14} style={{ color: T.accentText }} />
+          <span className="text-[13px] flex-1" style={{ color: T.text }}>
+            Filtered from Lead & Record Management — <strong>{activeFilter.source}</strong>{activeFilter.tenants?.length ? ` affects ${activeFilter.tenants.length} tenant${activeFilter.tenants.length !== 1 ? "s" : ""}: ${activeFilter.tenants.join(", ")}` : ""}
+          </span>
+          <button onClick={() => setFilterDismissed(true)} className="text-[12px] flex items-center gap-1 px-2 py-1 rounded" style={{ color: T.accentText }}><X size={11} />Clear</button>
+        </div>
+      )}
       {brokenTenants.length > 0 && (
         <div className="flex gap-3 items-center p-3.5 rounded-lg mb-4" style={{ background: T.dangerSoft, borderLeft: `3px solid ${T.danger}` }}>
           <TriangleAlert size={18} style={{ color: T.danger }} />
@@ -2942,8 +2960,8 @@ function IntegrationsPage() {
         </div>
       )}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-        {integ.map((it, i) => (
-          <div key={i} className="rounded-lg border bg-white p-4 hover:shadow-md transition-shadow" style={{ borderColor: T.border, boxShadow: "0 1px 2px rgba(26,31,54,.05)" }}>
+        {sortedInteg.map((it, i) => (
+          <div key={i} className="rounded-lg border bg-white p-4 hover:shadow-md transition-shadow" style={matches(it) ? { borderColor: T.primary, boxShadow: `0 0 0 2px ${T.primarySoft}` } : { borderColor: T.border, boxShadow: "0 1px 2px rgba(26,31,54,.05)" }}>
             <div className="flex items-start justify-between mb-3">
               <div className="w-9 h-9 rounded-lg flex items-center justify-center" style={{ background: T.subtle }}><it.icon size={18} style={{ color: T.primary }} /></div>
               <Badge tone={it.beta ? "warning" : it.ok ? "success" : "danger"}>{it.beta ? "Beta" : it.ok ? "Connected" : "Feed down"}</Badge>
@@ -3069,6 +3087,47 @@ function mockMatchInfo(lead) {
   return { reason: "Phone number — exact match", confidence: 94 + (n % 6) };
 }
 
+// Sources that are real third-party integrations with credentials to rotate. Website and
+// Walk-in are internal capture channels — there's nothing in Integrations to "fix" for them.
+const EXTERNAL_INTEGRATION_SOURCES = new Set(["IndiaMART", "CarWale", "CarDekho", "WhatsApp"]);
+
+// A failed lead caused by expired/invalid credentials — reprocessing this is a guaranteed
+// no-op until the token is rotated on the Integrations page, so the UI should never offer
+// "reprocess" as if it were a fix for this class of failure.
+const isAuthFailure = (lead) => lead.procState === "failed" && mockFailureDebug(lead).httpStatus === 401;
+
+// Integration-first health rollup — one row per lead source, not per tenant. This is what
+// turns N per-tenant failure cards into a single "IndiaMART is down for 2 tenants" incident.
+// Status reflects ingestion failures only (procState "failed"); AI-enrichment timeouts
+// ("partial") are a downstream pipeline issue, not a sign the integration itself is broken.
+function computeIntegrationHealth(leads) {
+  return LEAD_SOURCES.map((source) => {
+    const rows = leads.filter((l) => l.source === source && !l.isTest);
+    const failed = rows.filter((l) => l.procState === "failed");
+    const successes = rows.filter((l) => l.procState === "success");
+    const total = rows.length;
+    const errorRate = total ? failed.length / total : 0;
+    const status = failed.length === 0 ? "Healthy" : errorRate >= 0.5 ? "Down" : "Degraded";
+    const reasonMap = new Map();
+    failed.forEach((l) => {
+      const reason = l.failureReason || "Unknown error";
+      if (!reasonMap.has(reason)) reasonMap.set(reason, new Set());
+      reasonMap.get(reason).add(l.tenant);
+    });
+    const failureGroups = Array.from(reasonMap.entries()).map(([reason, tenantSet]) => ({ reason, tenants: Array.from(tenantSet) }));
+    const tenantsAffected = Array.from(new Set(failed.map((l) => l.tenant)));
+    const lastSuccess = successes.reduce((latest, l) => {
+      const t = new Date(l.receivedAt).getTime();
+      return (!latest || t > latest.t) ? { t, label: l.receivedAt } : latest;
+    }, null);
+    return {
+      source, status, total, failedCount: failed.length, tenantsAffected, failureGroups,
+      lastSuccessAt: lastSuccess?.label || null,
+      isExternal: EXTERNAL_INTEGRATION_SOURCES.has(source),
+    };
+  });
+}
+
 // Partial masks (last 2-4 chars visible) instead of a uniform block — enough for support to
 // confirm identity on a call without a reveal request, and it doesn't repeat as visual noise.
 const maskPhone = (phone) => { const d = digitsOnly(phone); return `+91 ${"•".repeat(Math.max(0, d.length - 6))}${d.slice(-2)}`; };
@@ -3181,7 +3240,7 @@ function DuplicateReviewModal({ open, onClose, lead, leads, onMerge, onDismiss, 
 }
 
 /* ---- Lead Detail Drawer ---- */
-function LeadDetailDrawer({ lead, leads, open, onClose, piiGranted, onRequestPII, onReprocess, onStatusChange, onAssign, goToTenant }) {
+function LeadDetailDrawer({ lead, leads, open, onClose, piiGranted, onRequestPII, onReprocess, onStatusChange, onAssign, goToTenant, goToIntegrations }) {
   const [histTab, setHistTab] = useState("details");
   if (!open || !lead) return null;
   const masked = !piiGranted;
@@ -3272,7 +3331,14 @@ function LeadDetailDrawer({ lead, leads, open, onClose, piiGranted, onRequestPII
                       <div>{dbg.normalizedPayload}</div>
                     </div>
                   </details>
-                  <Button size="sm" variant="danger" onClick={() => onReprocess([lead.id])}><RefreshCw size={13} />Reprocess this lead</Button>
+                  {isAuthFailure(lead) ? (
+                    <div className="flex items-center gap-2">
+                      <Button size="sm" onClick={() => goToIntegrations?.(lead)}><Plug size={13} />Fix in Integrations</Button>
+                      <span className="text-[11px]" style={{ color: T.text3 }}>Reprocessing a token-expired lead is a guaranteed no-op</span>
+                    </div>
+                  ) : (
+                    <Button size="sm" variant="danger" onClick={() => onReprocess([lead.id])}><RefreshCw size={13} />Reprocess this lead</Button>
+                  )}
                 </div>
               );
             })()}
@@ -3365,18 +3431,13 @@ function LeadsPage({ go }) {
   const partialLeads = realLeads.filter((l) => l.procState === "partial");
   const successLeads = realLeads.filter((l) => l.procState === "success");
   const aiSummarized = realLeads.filter((l) => l.aiSummary);
+  // Failed leads it's actually worth offering a reprocess for — auth failures are a
+  // guaranteed no-op until the credential is rotated in Integrations.
+  const reprocessableFailedLeads = failedLeads.filter((l) => !isAuthFailure(l));
 
-  // Failures grouped into incidents (source → tenant → reason) instead of flat rows —
-  // the integration is the unit of work, individual rows are just symptoms of it.
-  const failureIncidents = useMemo(() => {
-    const map = new Map();
-    failedLeads.forEach((l) => {
-      const key = `${l.source}→${l.tenant}→${l.failureReason}`;
-      if (!map.has(key)) map.set(key, { key, source: l.source, tenant: l.tenant, reason: l.failureReason, ids: [], since: l.receivedAt });
-      map.get(key).ids.push(l.id);
-    });
-    return Array.from(map.values());
-  }, [failedLeads]);
+  // Integration-first health rollup — one row per source (IndiaMART, CarWale, ...), tenants
+  // affected shown as a count + drill-down list within that row, not as separate rows/cards.
+  const integrationHealth = useMemo(() => computeIntegrationHealth(realLeads), [realLeads]);
 
   // Filtered table rows
   const filtered = leads.filter((l) => {
@@ -3514,7 +3575,7 @@ function LeadsPage({ go }) {
   };
 
   const bulkReprocessSelected = () => {
-    const ids = [...sel.selected].filter((id) => failedLeads.some((f) => f.id === id));
+    const ids = [...sel.selected].filter((id) => reprocessableFailedLeads.some((f) => f.id === id));
     if (ids.length) triggerReprocess(ids);
   };
   const bulkExportSelected = () => {
@@ -3532,16 +3593,19 @@ function LeadsPage({ go }) {
 
   const statusTone = { New: "gray", Assigned: "info", Contacted: "warning", Converted: "success", Lost: "danger" };
   const procMeta = { success: { icon: CheckCircle2, color: T.success }, partial: { icon: AlertTriangle, color: T.warning }, failed: { icon: XCircle, color: T.danger }, duplicate: { icon: Copy, color: T.purple } };
-  const selectedFailedCount = [...sel.selected].filter((id) => failedLeads.some((f) => f.id === id)).length;
+  const selectedFailedCount = [...sel.selected].filter((id) => reprocessableFailedLeads.some((f) => f.id === id)).length;
+  const healthTone = { Healthy: "success", Degraded: "warning", Down: "danger" };
+  const [expandedSource, setExpandedSource] = useState(null);
+  const downOrDegraded = integrationHealth.filter((h) => h.status !== "Healthy");
 
   return (
     <>
-      <PageHeader title="Lead & Record Management" desc="Cross-tenant lead observability — sources, processing health, deduplication"
+      <PageHeader title="Lead & Record Management" desc="Internal tool — lead records across tenants and whether provider integrations are actually delivering leads"
         actions={<>
           {reprocessing && <span className="text-[12px] flex items-center gap-1.5" style={{ color: T.warning }}><RefreshCw size={13} className="animate-spin" />Reprocessing…</span>}
-          {failedLeads.length > 0 && (
-            <Button onClick={() => triggerReprocess(failedLeads.map((l) => l.id))} style={{ borderColor: "#F3C6C6", color: T.danger }}>
-              <RefreshCw size={14} />Reprocess failed ({failedLeads.length})
+          {reprocessableFailedLeads.length > 0 && (
+            <Button onClick={() => triggerReprocess(reprocessableFailedLeads.map((l) => l.id))} style={{ borderColor: "#F3C6C6", color: T.danger }}>
+              <RefreshCw size={14} />Reprocess failed ({reprocessableFailedLeads.length})
             </Button>
           )}
           <Button onClick={handleExport}><Download size={14} />Export {filtered.length > 0 ? `(${filtered.length})` : ""}</Button>
@@ -3566,41 +3630,86 @@ function LeadsPage({ go }) {
         ))}
       </div>
 
-      {/* Failure incidents — grouped by source → tenant → reason, the actual unit of work */}
-      {failureIncidents.length > 0 && (
-        <div className="mb-4 space-y-2">
-          {failureIncidents.map((inc) => (
-            <div key={inc.key} className="flex items-center gap-3 p-3 rounded-lg" style={{ background: T.dangerSoft, borderLeft: `3px solid ${T.danger}` }}>
-              <TriangleAlert size={16} style={{ color: T.danger }} className="shrink-0" />
-              <div className="flex-1 text-[13px]" style={{ color: T.text }}>
-                <strong>{inc.source} → {inc.tenant}</strong> · {inc.ids.length} failure{inc.ids.length !== 1 ? "s" : ""} since {inc.since} · {inc.reason}
-              </div>
-              <button onClick={() => triggerReprocess(inc.ids)} className="text-[12px] font-semibold px-2.5 py-1.5 rounded-lg border shrink-0" style={{ borderColor: T.danger, color: T.danger, background: "#fff" }}>Reprocess all ({inc.ids.length})</button>
-              <button onClick={() => go?.("integrations")} className="text-[12px] font-semibold px-2.5 py-1.5 rounded-lg shrink-0" style={{ color: T.primary }}>View Integration →</button>
-            </div>
-          ))}
+      {/* Integration Health — one row per source, tenants affected rolled up within it. This
+          is the primary section: "is IndiaMART broken, for whom, since when, fix it where?" */}
+      <Card className="mb-4">
+        <CardHeader title="Integration Health" sub={downOrDegraded.length > 0 ? `${downOrDegraded.length} source${downOrDegraded.length !== 1 ? "s" : ""} need attention` : "All lead sources delivering normally"} />
+        <div className="overflow-auto">
+          <table className="w-full text-[13px] border-collapse">
+            <thead><tr>{["Source", "Status", "Tenants affected", "Failure reason", "Last successful lead", ""].map((h) => (
+              <th key={h} className="text-left text-[11px] font-semibold uppercase tracking-wider px-4 py-2.5 border-b" style={{ color: T.text3, borderColor: T.border, background: T.subtle }}>{h}</th>
+            ))}</tr></thead>
+            <tbody>
+              {integrationHealth.map((h) => {
+                const expanded = expandedSource === h.source;
+                const canFix = h.isExternal && h.status !== "Healthy";
+                return (
+                  <React.Fragment key={h.source}>
+                    <tr className="hover:bg-slate-50">
+                      <td className="px-4 py-2.5 border-b font-medium" style={{ borderColor: T.border, color: T.text }}>{h.source}{!h.isExternal && <span className="ml-1.5 text-[10px] font-normal" style={{ color: T.text3 }}>(internal)</span>}</td>
+                      <td className="px-4 py-2.5 border-b" style={{ borderColor: T.border }}><Badge tone={healthTone[h.status]}>{h.status}</Badge></td>
+                      <td className="px-4 py-2.5 border-b" style={{ borderColor: T.border }}>
+                        {h.tenantsAffected.length === 0 ? <span style={{ color: T.text3 }}>—</span> : (
+                          <button onClick={() => setExpandedSource(expanded ? null : h.source)} className="flex items-center gap-1 hover:underline" style={{ color: T.text }}>
+                            {h.tenantsAffected.length} tenant{h.tenantsAffected.length !== 1 ? "s" : ""}
+                            <ChevronDown size={12} className={cx("transition-transform", expanded && "rotate-180")} style={{ color: T.text3 }} />
+                          </button>
+                        )}
+                      </td>
+                      <td className="px-4 py-2.5 border-b max-w-[260px]" style={{ borderColor: T.border, color: T.text2 }}>
+                        {h.failureGroups.length === 0 ? <span style={{ color: T.text3 }}>—</span> : h.failureGroups.length === 1 ? h.failureGroups[0].reason : `${h.failureGroups.length} distinct issues`}
+                      </td>
+                      <td className="px-4 py-2.5 border-b text-[12px] whitespace-nowrap" style={{ borderColor: T.border, color: T.text2 }}>{h.lastSuccessAt || "—"}</td>
+                      <td className="px-4 py-2.5 border-b text-right" style={{ borderColor: T.border }}>
+                        {canFix ? (
+                          <button onClick={() => go?.("integrations", { source: h.source, tenants: h.tenantsAffected })} className="text-[12px] font-semibold whitespace-nowrap hover:underline" style={{ color: T.primary }}>Fix in Integrations →</button>
+                        ) : h.status !== "Healthy" ? (
+                          <span className="text-[11px]" style={{ color: T.text3 }}>Not a credential issue</span>
+                        ) : null}
+                      </td>
+                    </tr>
+                    {expanded && h.tenantsAffected.length > 0 && (
+                      <tr>
+                        <td colSpan={6} className="px-4 py-2.5 border-b" style={{ borderColor: T.border, background: T.subtle }}>
+                          <div className="flex flex-wrap gap-1.5">
+                            {h.tenantsAffected.map((t) => <Badge key={t} tone={TIER_TONE[TENANT_TIER[t] || "Growth"]}>{t}</Badge>)}
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+                  </React.Fragment>
+                );
+              })}
+            </tbody>
+          </table>
         </div>
-      )}
+      </Card>
 
       {/* Processing status + Source table row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
-        {/* Processing status breakdown */}
+        {/* Processing overview — pipeline health signal, distinct from Integration Health above:
+            a "partial" here is an AI-enrichment timeout downstream of a successful ingest, not
+            proof a source is broken. Trend is vs the prior 24h so a count reads as normal or a spike. */}
         <Card>
-          <CardHeader title="Processing Status" sub="Last 1,000 leads · click to filter" />
+          <CardHeader title="Lead Processing Overview" sub="Pipeline health signal · click to filter" />
           <CardBody className="space-y-2">
             {[
-              { label: "Successful", count: successLeads.length, state: "success", color: T.success },
-              { label: "Partial (AI timeout)", count: partialLeads.length, state: "partial", color: T.warning },
-              { label: "Failed Ingestion", count: failedLeads.length, state: "failed", color: T.danger },
-              { label: "Duplicate Flagged", count: dupLeads.length, state: "duplicate", color: T.purple },
-            ].map(({ label, count, state, color }) => {
+              { label: "Successful", count: successLeads.length, state: "success", color: T.success, trendDelta: "+3", trendGood: true },
+              { label: "Partial (AI timeout)", count: partialLeads.length, state: "partial", color: T.warning, trendDelta: "steady", trendGood: null },
+              { label: "Failed Ingestion", count: failedLeads.length, state: "failed", color: T.danger, trendDelta: "+3", trendGood: false },
+              { label: "Duplicate Flagged", count: dupLeads.length, state: "duplicate", color: T.purple, trendDelta: "+1", trendGood: false },
+            ].map(({ label, count, state, color, trendDelta, trendGood }) => {
               const active = filterState === state;
               return (
                 <div key={state} onClick={() => setTileFilter(state)} className="flex items-center gap-3 p-2.5 rounded-lg cursor-pointer hover:bg-slate-50 transition-colors" style={{ background: active ? T.primarySoft : undefined, border: `1px solid ${active ? T.primary : "transparent"}` }}>
                   <div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: color }} />
                   <span className="text-[13px] flex-1" style={{ color: T.text }}>{label}</span>
+                  <span className="text-[11px] flex items-center gap-0.5" style={{ color: trendGood === null ? T.text3 : trendGood ? T.success : T.danger }} title="vs prior 24h">
+                    {trendDelta !== "steady" && (trendGood ? <ArrowUpRight size={11} /> : <ArrowDownRight size={11} className="rotate-90" />)}
+                    {trendDelta === "steady" ? "steady" : `${trendDelta} vs prior 24h`}
+                  </span>
                   <span className="text-[13px] font-semibold" style={{ color }}>{count}</span>
-                  <div className="w-24 h-1.5 rounded-full overflow-hidden" style={{ background: "#E4E7F0" }}>
+                  <div className="w-16 h-1.5 rounded-full overflow-hidden" style={{ background: "#E4E7F0" }}>
                     <div className="h-full rounded-full" style={{ width: `${(count / realLeads.length) * 100}%`, background: color }} />
                   </div>
                 </div>
@@ -3609,9 +3718,10 @@ function LeadsPage({ go }) {
           </CardBody>
         </Card>
 
-        {/* Lead sources */}
+        {/* Lead sources — a business/performance view (volume, conversion, cost), not the
+            integration-health view above; kept separate so the two aren't read as the same thing. */}
         <Card>
-          <CardHeader title="Lead Sources (30d)" />
+          <CardHeader title="Lead Sources (30d)" sub="Volume & conversion — performance view, not integration health" />
           <CardBody className="p-0">
             <div className="overflow-auto">
               <table className="w-full text-[13px] border-collapse">
@@ -3726,7 +3836,9 @@ function LeadsPage({ go }) {
               <Td onClick={(e) => e.stopPropagation()}>
                 <Menu items={[
                   { label: "View details", icon: Eye, onClick: () => setDetailLead(l) },
-                  ...(l.procState === "failed" ? [{ label: "Retry ingestion", icon: RefreshCw, onClick: () => triggerReprocess([l.id]) }] : []),
+                  ...(l.procState === "failed" ? (isAuthFailure(l)
+                    ? [{ label: "Fix in Integrations →", icon: Plug, onClick: () => go?.("integrations", { source: l.source, tenants: [l.tenant] }) }]
+                    : [{ label: "Retry ingestion", icon: RefreshCw, onClick: () => triggerReprocess([l.id]) }]) : []),
                   { label: "Reassign tenant", icon: Building2, onClick: () => setReassignLead(l) },
                   { label: l.isTest ? "Unmark test data" : "Mark as test data", icon: Tag, onClick: () => handleMarkTest(l.id) },
                   { label: "Escalate to engineering", icon: Flag, onClick: () => handleEscalate(l) },
@@ -3745,8 +3857,8 @@ function LeadsPage({ go }) {
           <p className="text-[13px]" style={{ color: T.text2 }}>
             This will re-run ingestion for <strong style={{ color: T.text }}>{reprocessConfirm.ids.length} failed lead{reprocessConfirm.ids.length !== 1 ? "s" : ""}</strong>. The action is logged to the audit trail. Failed leads that succeed will move to "success" state.
           </p>
-          <div className="mt-3 rounded-lg px-3 py-2 text-[12px]" style={{ background: T.warningSoft, color: "#92400E" }}>
-            ⚠ Typically caused by API auth errors — ensure the source token is refreshed before reprocessing.
+          <div className="mt-3 rounded-lg px-3 py-2 text-[12px]" style={{ background: T.primarySoft, color: T.accentText }}>
+            Credential/auth failures aren't offered here — those need the token rotated in Integrations first, not a reprocess.
           </div>
         </Modal>
       )}
@@ -3781,6 +3893,7 @@ function LeadsPage({ go }) {
         onStatusChange={handleStatusChange}
         onAssign={handleAssign}
         goToTenant={() => go?.("clients")}
+        goToIntegrations={(l) => go?.("integrations", { source: l.source, tenants: [l.tenant] })}
       />
 
       {/* Duplicate review modal */}
@@ -5259,7 +5372,8 @@ function Shell() {
   const [active, setActive] = useState("dashboard");
   const [tenantForCs, setTenantForCs] = useState(null);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const go = (p) => { setActive(p); window.scrollTo(0, 0); };
+  const [pageParams, setPageParams] = useState(null);
+  const go = (p, params) => { setActive(p); setPageParams(params || null); window.scrollTo(0, 0); };
 
   const page = (() => {
     switch (active) {
@@ -5272,7 +5386,7 @@ function Shell() {
       case "leads": return <LeadsPage go={go} />;
       case "automation": return <AutomationPage />;
       case "ai": return <AiPage />;
-      case "integrations": return <IntegrationsPage />;
+      case "integrations": return <IntegrationsPage filter={pageParams} />;
       case "comms": return <CommsPage />;
       case "reports": return <ReportsPage />;
       case "queues": return <QueuesPage />;
