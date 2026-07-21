@@ -3594,8 +3594,6 @@ function LeadsPage({ go }) {
   const statusTone = { New: "gray", Assigned: "info", Contacted: "warning", Converted: "success", Lost: "danger" };
   const procMeta = { success: { icon: CheckCircle2, color: T.success }, partial: { icon: AlertTriangle, color: T.warning }, failed: { icon: XCircle, color: T.danger }, duplicate: { icon: Copy, color: T.purple } };
   const selectedFailedCount = [...sel.selected].filter((id) => reprocessableFailedLeads.some((f) => f.id === id)).length;
-  const healthTone = { Healthy: "success", Degraded: "warning", Down: "danger" };
-  const [expandedSource, setExpandedSource] = useState(null);
   const downOrDegraded = integrationHealth.filter((h) => h.status !== "Healthy");
 
   return (
@@ -3630,60 +3628,31 @@ function LeadsPage({ go }) {
         ))}
       </div>
 
-      {/* Integration Health — one row per source, tenants affected rolled up within it. This
-          is the primary section: "is IndiaMART broken, for whom, since when, fix it where?" */}
-      <Card className="mb-4">
-        <CardHeader title="Integration Health" sub={downOrDegraded.length > 0 ? `${downOrDegraded.length} source${downOrDegraded.length !== 1 ? "s" : ""} need attention` : "All lead sources delivering normally"} />
-        <div className="overflow-auto">
-          <table className="w-full text-[13px] border-collapse">
-            <thead><tr>{["Source", "Status", "Tenants affected", "Failure reason", "Last successful lead", ""].map((h) => (
-              <th key={h} className="text-left text-[11px] font-semibold uppercase tracking-wider px-4 py-2.5 border-b" style={{ color: T.text3, borderColor: T.border, background: T.subtle }}>{h}</th>
-            ))}</tr></thead>
-            <tbody>
-              {integrationHealth.map((h) => {
-                const expanded = expandedSource === h.source;
-                const canFix = h.isExternal && h.status !== "Healthy";
-                return (
-                  <React.Fragment key={h.source}>
-                    <tr className="hover:bg-slate-50">
-                      <td className="px-4 py-2.5 border-b font-medium" style={{ borderColor: T.border, color: T.text }}>{h.source}{!h.isExternal && <span className="ml-1.5 text-[10px] font-normal" style={{ color: T.text3 }}>(internal)</span>}</td>
-                      <td className="px-4 py-2.5 border-b" style={{ borderColor: T.border }}><Badge tone={healthTone[h.status]}>{h.status}</Badge></td>
-                      <td className="px-4 py-2.5 border-b" style={{ borderColor: T.border }}>
-                        {h.tenantsAffected.length === 0 ? <span style={{ color: T.text3 }}>—</span> : (
-                          <button onClick={() => setExpandedSource(expanded ? null : h.source)} className="flex items-center gap-1 hover:underline" style={{ color: T.text }}>
-                            {h.tenantsAffected.length} tenant{h.tenantsAffected.length !== 1 ? "s" : ""}
-                            <ChevronDown size={12} className={cx("transition-transform", expanded && "rotate-180")} style={{ color: T.text3 }} />
-                          </button>
-                        )}
-                      </td>
-                      <td className="px-4 py-2.5 border-b max-w-[260px]" style={{ borderColor: T.border, color: T.text2 }}>
-                        {h.failureGroups.length === 0 ? <span style={{ color: T.text3 }}>—</span> : h.failureGroups.length === 1 ? h.failureGroups[0].reason : `${h.failureGroups.length} distinct issues`}
-                      </td>
-                      <td className="px-4 py-2.5 border-b text-[12px] whitespace-nowrap" style={{ borderColor: T.border, color: T.text2 }}>{h.lastSuccessAt || "—"}</td>
-                      <td className="px-4 py-2.5 border-b text-right" style={{ borderColor: T.border }}>
-                        {canFix ? (
-                          <button onClick={() => go?.("integrations", { source: h.source, tenants: h.tenantsAffected })} className="text-[12px] font-semibold whitespace-nowrap hover:underline" style={{ color: T.primary }}>Fix in Integrations →</button>
-                        ) : h.status !== "Healthy" ? (
-                          <span className="text-[11px]" style={{ color: T.text3 }}>Not a credential issue</span>
-                        ) : null}
-                      </td>
-                    </tr>
-                    {expanded && h.tenantsAffected.length > 0 && (
-                      <tr>
-                        <td colSpan={6} className="px-4 py-2.5 border-b" style={{ borderColor: T.border, background: T.subtle }}>
-                          <div className="flex flex-wrap gap-1.5">
-                            {h.tenantsAffected.map((t) => <Badge key={t} tone={TIER_TONE[TENANT_TIER[t] || "Growth"]}>{t}</Badge>)}
-                          </div>
-                        </td>
-                      </tr>
-                    )}
-                  </React.Fragment>
-                );
-              })}
-            </tbody>
-          </table>
+      {/* Integration Health — alert-only: a row only exists here for a source that's currently
+          broken, source-grouped (2 tenants failing the same way on IndiaMART is one alert, not
+          two). Healthy sources render nothing — that's what "no row" means. Per-source config,
+          credentials, and status detail live on the Integrations page only, not here. */}
+      {downOrDegraded.length > 0 && (
+        <div className="mb-4 space-y-2">
+          {downOrDegraded.map((h) => {
+            const canFix = h.isExternal;
+            const reason = h.failureGroups.length === 0 ? "Unknown issue" : h.failureGroups.length === 1 ? h.failureGroups[0].reason : `${h.failureGroups.length} distinct issues`;
+            return (
+              <div key={h.source} className="flex items-center gap-2.5 p-3 rounded-lg text-[13px]" style={{ background: T.dangerSoft, borderLeft: `3px solid ${T.danger}` }}>
+                <TriangleAlert size={15} style={{ color: T.danger }} className="shrink-0" />
+                <div className="flex-1" style={{ color: T.text }}>
+                  <strong>{h.source}</strong> down{h.tenantsAffected.length > 0 ? ` — ${h.tenantsAffected.length} tenant${h.tenantsAffected.length !== 1 ? "s" : ""} affected (${h.tenantsAffected.join(", ")})` : ""} — {reason}
+                </div>
+                {canFix ? (
+                  <button onClick={() => go?.("integrations", { source: h.source, tenants: h.tenantsAffected })} className="text-[12px] font-semibold whitespace-nowrap shrink-0 hover:underline" style={{ color: T.primary }}>Fix in Integrations →</button>
+                ) : (
+                  <button onClick={() => go?.("integrations")} className="text-[12px] font-semibold whitespace-nowrap shrink-0 hover:underline" style={{ color: T.primary }}>Integrations →</button>
+                )}
+              </div>
+            );
+          })}
         </div>
-      </Card>
+      )}
 
       {/* Processing status + Source table row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
