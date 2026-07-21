@@ -13,7 +13,7 @@ import {
   Power, LogIn, X, Check, TrendingDown, CircleDot, Flag, Briefcase,
   Copy, Archive, Trash2, Hash, IndianRupee, Package, Percent, Tag,
   History, DollarSign, BarChart2, PieChart, Receipt, UserCog, LogOut,
-  PanelLeftClose, PanelLeft, GripVertical, ArrowUpDown, Star,
+  PanelLeftClose, PanelLeft, GripVertical, ArrowUpDown, Star, RotateCcw,
 } from "lucide-react";
 import ledsakLogo from "./assets/ledsak-logo.svg";
 
@@ -3351,6 +3351,7 @@ function LeadsPage({ go }) {
   const [dupModal, setDupModal] = useState(null); // lead
   const [reassignLead, setReassignLead] = useState(null); // lead
   const [reprocessing, setReprocessing] = useState(false);
+  const [resetConfirm, setResetConfirm] = useState(false);
 
   // Check if current user has active PII grant
   const now = Date.now();
@@ -3485,6 +3486,22 @@ function LeadsPage({ go }) {
     setPIIGrants((prev) => { const next = [grant, ...prev]; savePIIGrants(next); return next; });
   };
 
+  // Wipes local mutations and restores the original seed leads/audit/PII-grant state — this
+  // is a demo with static seed data and no backend generating new failures over time, so this
+  // is the only way to get failed/duplicate/partial leads back once you've resolved them all.
+  const handleResetDemo = () => {
+    localStorage.removeItem(LEADS_STORAGE_KEY);
+    localStorage.removeItem(LEADS_AUDIT_KEY);
+    localStorage.removeItem(PII_GRANTS_KEY);
+    setLeadsRaw(SEED_LEADS);
+    setAudit([]);
+    setPIIGrants([]);
+    setResetConfirm(false);
+    setDetailLead(null);
+    sel.clear();
+    store.notify("Demo data reset to seed state");
+  };
+
   const handleReassignTenant = (id, tenant) => {
     const t = SEED_CLIENTS.find((c) => c.name === tenant);
     setLeads((prev) => prev.map((l) => l.id !== id ? l : { ...l, tenant, tenantId: t ? t.id : l.tenantId, history: [...l.history, { action: `Reassigned from ${l.tenant} to ${tenant}`, by: ADMIN, when: new Date().toLocaleString("en-IN") }] }));
@@ -3545,6 +3562,7 @@ function LeadsPage({ go }) {
           )}
           <Button onClick={handleExport}><Download size={14} />Export {filtered.length > 0 ? `(${filtered.length})` : ""}</Button>
           <button onClick={() => setRefreshTick((n) => n + 1)} className="p-2 rounded-lg border hover:bg-slate-50" title="Refresh" style={{ borderColor: T.border }}><RefreshCw size={14} style={{ color: T.text3 }} /></button>
+          <button onClick={() => setResetConfirm(true)} className="p-2 rounded-lg border hover:bg-slate-50" title="Reset demo data — restores original seed leads" style={{ borderColor: T.border }}><RotateCcw size={14} style={{ color: T.text3 }} /></button>
         </>} />
 
       {/* KPI tiles — clickable to filter */}
@@ -3746,6 +3764,19 @@ function LeadsPage({ go }) {
           </p>
           <div className="mt-3 rounded-lg px-3 py-2 text-[12px]" style={{ background: T.warningSoft, color: "#92400E" }}>
             ⚠ Typically caused by API auth errors — ensure the source token is refreshed before reprocessing.
+          </div>
+        </Modal>
+      )}
+
+      {/* Reset demo data confirm */}
+      {resetConfirm && (
+        <Modal open={resetConfirm} onClose={() => setResetConfirm(false)} title="Reset Demo Data"
+          footer={<><Button onClick={() => setResetConfirm(false)}>Cancel</Button><Button variant="danger" onClick={handleResetDemo}><RotateCcw size={13} />Reset to seed data</Button></>}>
+          <p className="text-[13px]" style={{ color: T.text2 }}>
+            This restores the original 15 seed leads — including the 3 that start as <strong style={{ color: T.danger }}>failed</strong> and 2 as <strong style={{ color: T.purple }}>duplicate</strong> — and clears every local mutation, the leads audit trail, and any active PII access grant.
+          </p>
+          <div className="mt-3 rounded-lg px-3 py-2 text-[12px]" style={{ background: T.warningSoft, color: "#92400E" }}>
+            This is a demo-data reset only — it doesn't touch the rest of the app, and can't be undone.
           </div>
         </Modal>
       )}
