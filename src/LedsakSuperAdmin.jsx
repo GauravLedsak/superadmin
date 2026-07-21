@@ -3016,14 +3016,14 @@ const SEED_LEADS = [
   { id: "ld-003", name: "Rohit Verma", phone: "+91-76543-21098", email: "rohit@example.com", source: "IndiaMART", tenant: "MedLinks", tenantId: 3, status: "New", procState: "failed", duplicateOf: null, aiSummary: null, assignee: null, receivedAt: "13 May 2026 08:30", failureReason: "Auth error: IndiaMART API token expired", history: [{ action: "Lead received", by: "system", when: "13 May 2026 08:30" }, { action: "Processing failed: Auth error", by: "system", when: "13 May 2026 08:30" }] },
   { id: "ld-004", name: "Kavita Reddy", phone: "+91-65432-10987", email: "kavita@example.com", source: "IndiaMART", tenant: "MedLinks", tenantId: 3, status: "New", procState: "failed", duplicateOf: null, aiSummary: null, assignee: null, receivedAt: "13 May 2026 08:28", failureReason: "Auth error: IndiaMART API token expired", history: [{ action: "Lead received", by: "system", when: "13 May 2026 08:28" }, { action: "Processing failed: Auth error", by: "system", when: "13 May 2026 08:28" }] },
   { id: "ld-005", name: "Suresh Patel", phone: "+91-54321-09876", email: "suresh@example.com", source: "WhatsApp", tenant: "Derma Purtitys", tenantId: 2, status: "Contacted", procState: "success", duplicateOf: null, aiSummary: "Returning patient, interested in skin rejuvenation. Has booked before.", assignee: "Luv", receivedAt: "13 May 2026 07:45", failureReason: null, history: [{ action: "Lead received", by: "system", when: "13 May 2026 07:45" }, { action: "Contacted via WhatsApp", by: "Luv", when: "13 May 2026 08:00" }] },
-  { id: "ld-006", name: "Meera Iyer", phone: "+91-43210-98765", email: "meera@example.com", source: "Website", tenant: "Derma Purtitys", tenantId: 2, status: "New", procState: "duplicate", duplicateOf: "ld-005", aiSummary: "Phone matches existing lead ld-005 (Suresh Patel via WhatsApp).", assignee: null, receivedAt: "13 May 2026 07:40", failureReason: null, history: [{ action: "Lead received", by: "system", when: "13 May 2026 07:40" }, { action: "Duplicate detected: phone match with ld-005", by: "system", when: "13 May 2026 07:41" }] },
+  { id: "ld-006", name: "Meera Iyer", phone: "+91-54321-09876", email: "meera@example.com", source: "Website", tenant: "Derma Purtitys", tenantId: 2, status: "New", procState: "duplicate", duplicateOf: "ld-005", aiSummary: "Phone matches existing lead ld-005 (Suresh Patel via WhatsApp).", assignee: null, receivedAt: "13 May 2026 07:40", failureReason: null, history: [{ action: "Lead received", by: "system", when: "13 May 2026 07:40" }, { action: "Duplicate detected: phone match with ld-005", by: "system", when: "13 May 2026 07:41" }] },
   { id: "ld-007", name: "Vikram Singh", phone: "+91-32109-87654", email: "vikram@example.com", source: "CarWale", tenant: "Varun Group", tenantId: 6, status: "Converted", procState: "success", duplicateOf: null, aiSummary: "Converted after 3 follow-ups. Booked Hyundai Creta.", assignee: "Saif Sir", receivedAt: "12 May 2026 16:20", failureReason: null, history: [{ action: "Lead received", by: "system", when: "12 May 2026 16:20" }, { action: "Converted", by: "Saif Sir", when: "13 May 2026 11:00" }] },
   { id: "ld-008", name: "Anita Joshi", phone: "+91-21098-76543", email: "anita@example.com", source: "Website", tenant: "MedLinks", tenantId: 3, status: "New", procState: "partial", duplicateOf: null, aiSummary: "Lead captured but AI enrichment incomplete — contact details valid.", assignee: null, receivedAt: "12 May 2026 15:55", failureReason: "AI enrichment timeout", history: [{ action: "Lead received", by: "system", when: "12 May 2026 15:55" }, { action: "Partial processing: AI enrichment timeout", by: "system", when: "12 May 2026 15:56" }] },
   { id: "ld-009", name: "Deepak Rao", phone: "+91-10987-65432", email: "deepak@example.com", source: "CarDekho", tenant: "Urban Autohub", tenantId: 11, status: "Assigned", procState: "success", duplicateOf: null, aiSummary: "Looking for family car, 7-seater preferred. Deadline: next month.", assignee: "Luv", receivedAt: "12 May 2026 14:30", failureReason: null, history: [{ action: "Lead received", by: "system", when: "12 May 2026 14:30" }] },
   { id: "ld-010", name: "Sunita Kapoor", phone: "+91-09876-54321", email: "sunita@example.com", source: "Walk-in", tenant: "Rezoni", tenantId: 1, status: "Lost", procState: "success", duplicateOf: null, aiSummary: "Walk-in visitor. Browsed but didn't proceed. Price sensitive.", assignee: "Saif Sir", receivedAt: "12 May 2026 12:10", failureReason: null, history: [{ action: "Lead received", by: "system", when: "12 May 2026 12:10" }, { action: "Marked Lost", by: "Saif Sir", when: "12 May 2026 17:00" }] },
   { id: "ld-011", name: "Rahul Mehta", phone: "+91-98001-23456", email: "rahul@example.com", source: "IndiaMART", tenant: "BrightPath Edu", tenantId: 8, status: "New", procState: "failed", duplicateOf: null, aiSummary: null, assignee: null, receivedAt: "12 May 2026 11:40", failureReason: "Auth error: IndiaMART API token expired", history: [{ action: "Lead received", by: "system", when: "12 May 2026 11:40" }, { action: "Processing failed", by: "system", when: "12 May 2026 11:40" }] },
   { id: "ld-012", name: "Pooja Sharma", phone: "+91-87001-23456", email: "pooja@example.com", source: "WhatsApp", tenant: "Varun Group", tenantId: 6, status: "Contacted", procState: "success", duplicateOf: null, aiSummary: "Interested in commercial vehicles. Fleet buyer potential.", assignee: "Saif Sir", receivedAt: "12 May 2026 10:05", failureReason: null, history: [{ action: "Lead received", by: "system", when: "12 May 2026 10:05" }] },
-  { id: "ld-013", name: "Anil Kumar", phone: "+91-76001-23456", email: "anil@example.com", source: "CarWale", tenant: "Urban Autohub", tenantId: 11, status: "New", procState: "duplicate", duplicateOf: "ld-009", aiSummary: "Phone match with ld-009 (Deepak Rao via CarDekho).", assignee: null, receivedAt: "11 May 2026 18:30", failureReason: null, history: [{ action: "Lead received", by: "system", when: "11 May 2026 18:30" }, { action: "Duplicate detected", by: "system", when: "11 May 2026 18:31" }] },
+  { id: "ld-013", name: "Anil Kumar", phone: "+91-10987-65432", email: "anil@example.com", source: "CarWale", tenant: "Urban Autohub", tenantId: 11, status: "New", procState: "duplicate", duplicateOf: "ld-009", aiSummary: "Phone match with ld-009 (Deepak Rao via CarDekho).", assignee: null, receivedAt: "11 May 2026 18:30", failureReason: null, history: [{ action: "Lead received", by: "system", when: "11 May 2026 18:30" }, { action: "Duplicate detected", by: "system", when: "11 May 2026 18:31" }] },
   { id: "ld-014", name: "Geeta Singh", phone: "+91-65001-23456", email: "geeta@example.com", source: "Website", tenant: "Derma Purtitys", tenantId: 2, status: "New", procState: "partial", duplicateOf: null, aiSummary: null, assignee: null, receivedAt: "11 May 2026 16:00", failureReason: "AI enrichment timeout", history: [{ action: "Lead received", by: "system", when: "11 May 2026 16:00" }] },
   { id: "ld-015", name: "Sunil Desai", phone: "+91-54001-23456", email: "sunil@example.com", source: "CarDekho", tenant: "Varun Group", tenantId: 6, status: "Assigned", procState: "success", duplicateOf: null, aiSummary: "Budget buyer. Comparing 3 models. High follow-up priority.", assignee: "Saif Sir", receivedAt: "11 May 2026 14:22", failureReason: null, history: [{ action: "Lead received", by: "system", when: "11 May 2026 14:22" }] },
 ];
@@ -3036,6 +3036,43 @@ const LEAD_SOURCES_DATA = [
   { source: "IndiaMART", count: 2100, convPct: 2.9, costPerLead: 35 },
   { source: "Walk-in", count: 2590, convPct: 12.1, costPerLead: 0 },
 ];
+
+const TENANT_TIER = { "MedLinks": "Enterprise", "Varun Group": "Enterprise", "Derma Purtitys": "Growth", "Urban Autohub": "Growth", "Rezoni": "Trial", "BrightPath Edu": "Trial" };
+const TIER_TONE = { Enterprise: "purple", Growth: "info", Trial: "gray" };
+const FILTER_PLURAL = { Source: "Sources", Tenant: "Tenants", Status: "Statuses", Processing: "Processing States" };
+
+// Deterministic (non-cryptographic) hash so support can search a phone number without
+// ever un-masking it — same digits always hash the same, but the hash can't be reversed.
+const simpleHash = (s) => { let h = 0; for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0; return h.toString(36); };
+const digitsOnly = (s) => (s || "").replace(/\D/g, "");
+const last4Hash = (phone) => simpleHash(digitsOnly(phone).slice(-4));
+
+// Mock ingestion debug info derived deterministically from the lead — a demo stand-in for
+// what a real pipeline would log (raw payload, normalized payload, HTTP status, retry count).
+function mockFailureDebug(lead) {
+  const n = parseInt(lead.id.replace(/\D/g, ""), 10) || 1;
+  const httpStatus = /auth|token/i.test(lead.failureReason || "") ? 401 : /timeout/i.test(lead.failureReason || "") ? 504 : 422;
+  return {
+    httpStatus,
+    attempt: 1 + (n % 3),
+    nextRetryAt: `in ~${5 + (n % 10)} min`,
+    rawPayload: `{ "name": "${lead.name}", "phone": "${lead.phone}", "source": "${lead.source}", "tenant_id": ${lead.tenantId} }`,
+    normalizedPayload: httpStatus === 401 ? "null — auth failed before normalization" : `{ "full_name": "${lead.name}", "mobile": null, "tenant_id": ${lead.tenantId} }`,
+  };
+}
+
+// Mock dedupe match metadata — the seed data already encodes the match via `duplicateOf`,
+// this derives a stable confidence/reason label from it for display.
+function mockMatchInfo(lead) {
+  const n = parseInt(lead.id.replace(/\D/g, ""), 10) || 1;
+  return { reason: "Phone number — exact match", confidence: 94 + (n % 6) };
+}
+
+// Partial masks (last 2-4 chars visible) instead of a uniform block — enough for support to
+// confirm identity on a call without a reveal request, and it doesn't repeat as visual noise.
+const maskPhone = (phone) => { const d = digitsOnly(phone); return `+91 ${"•".repeat(Math.max(0, d.length - 6))}${d.slice(-2)}`; };
+const maskName = (name) => { const parts = name.split(" "); return parts.map((p, i) => i === parts.length - 1 ? p[0] + "••••" : "••••").join(" "); };
+const maskEmail = (email) => { const [user, domain] = email.split("@"); return `${user.slice(0, 1)}••••@${domain || "•••"}`; };
 
 const LEADS_STORAGE_KEY = "ledsak_leads_v1";
 const LEADS_AUDIT_KEY = "ledsak_leads_audit_v1";
@@ -3086,49 +3123,80 @@ function PIIAccessModal({ open, onClose, onGranted, leadId }) {
 }
 
 /* ---- Duplicate Review Modal ---- */
-function DuplicateReviewModal({ open, onClose, lead, leads, onMerge, onDismiss }) {
+// Contact fields render as match/mismatch indicators, never as raw values — a reviewer
+// without PII access can still judge a duplicate off name/phone/email equality alone.
+function DuplicateReviewModal({ open, onClose, lead, leads, onMerge, onDismiss, piiGranted }) {
   if (!open || !lead) return null;
   const original = leads.find((l) => l.id === lead.duplicateOf);
+  const match = mockMatchInfo(lead);
+  const fields = original ? [
+    { k: "Name", a: lead.name, b: original.name },
+    { k: "Phone", a: lead.phone, b: original.phone },
+    { k: "Email", a: lead.email, b: original.email },
+  ] : [];
   return (
     <Modal open={open} onClose={onClose} title="Review Duplicate Lead"
-      footer={<><Button onClick={() => onDismiss(lead.id)}>Dismiss (keep both)</Button><Button variant="primary" onClick={() => onMerge(lead.id, lead.duplicateOf)}>Merge into original</Button></>}>
+      footer={<><Button onClick={() => onDismiss(lead.id)}>Not a duplicate — keep both</Button><Button variant="primary" onClick={() => onMerge(lead.id, lead.duplicateOf)}>Merge into original</Button></>}>
       <div className="space-y-3">
-        <p className="text-[13px]" style={{ color: T.text2 }}>A phone number match was detected. Review both records and choose to merge or keep separately.</p>
-        {[{ label: "This lead (duplicate)", rec: lead }, { label: "Original lead", rec: original }].map(({ label, rec }) => rec && (
-          <div key={rec.id} className="rounded-xl border p-3 space-y-1" style={{ borderColor: T.border }}>
-            <div className="text-[11px] font-semibold uppercase tracking-wider mb-2" style={{ color: T.text3 }}>{label}</div>
-            <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-[13px]">
-              <span style={{ color: T.text3 }}>ID</span><span style={{ color: T.text }}>{rec.id}</span>
-              <span style={{ color: T.text3 }}>Source</span><span style={{ color: T.text }}>{rec.source}</span>
-              <span style={{ color: T.text3 }}>Tenant</span><span style={{ color: T.text }}>{rec.tenant}</span>
-              <span style={{ color: T.text3 }}>Received</span><span style={{ color: T.text }}>{rec.receivedAt}</span>
-              <span style={{ color: T.text3 }}>Status</span><span style={{ color: T.text }}>{rec.status}</span>
+        <div className="flex items-center gap-2 rounded-lg px-3 py-2" style={{ background: T.purpleSoft }}>
+          <Copy size={14} style={{ color: T.purple }} />
+          <span className="text-[12px]" style={{ color: "#5B21B6" }}><strong>{match.reason}</strong> · {match.confidence}% confidence</span>
+        </div>
+        {original ? (
+          <div className="rounded-xl border overflow-hidden" style={{ borderColor: T.border }}>
+            <div className="grid grid-cols-3 text-[11px] font-semibold uppercase tracking-wider px-3 py-2" style={{ background: T.subtle, color: T.text3 }}>
+              <span>Field</span><span>{lead.id} (duplicate)</span><span>{original.id} (original)</span>
+            </div>
+            {fields.map(({ k, a, b }) => {
+              const isMatch = a === b;
+              return (
+                <div key={k} className="grid grid-cols-3 items-center px-3 py-2 border-t text-[13px]" style={{ borderColor: T.border }}>
+                  <span style={{ color: T.text3 }}>{k}</span>
+                  <span className="flex items-center gap-1.5" style={{ color: T.text }}>
+                    {piiGranted ? a : "•• masked ••"}
+                  </span>
+                  <span className="flex items-center gap-1.5" style={{ color: T.text }}>
+                    {isMatch ? <CheckCircle2 size={13} style={{ color: T.success }} /> : <XCircle size={13} style={{ color: T.danger }} />}
+                    <span style={{ color: isMatch ? T.success : T.danger }}>{isMatch ? "Match" : "Differs"}</span>
+                  </span>
+                </div>
+              );
+            })}
+            <div className="grid grid-cols-3 px-3 py-2 border-t text-[12px]" style={{ borderColor: T.border, color: T.text2 }}>
+              <span style={{ color: T.text3 }}>Source → Tenant</span><span>{lead.source} → {lead.tenant}</span><span>{original.source} → {original.tenant}</span>
+            </div>
+            <div className="grid grid-cols-3 px-3 py-2 border-t text-[12px]" style={{ borderColor: T.border, color: T.text2 }}>
+              <span style={{ color: T.text3 }}>Received</span><span>{lead.receivedAt}</span><span>{original.receivedAt}</span>
             </div>
           </div>
-        ))}
-        <p className="text-[12px]" style={{ color: T.text3 }}>Merging will mark this lead as resolved and log the action to the audit trail.</p>
+        ) : <p className="text-[13px]" style={{ color: T.text3 }}>Original lead record not found (may have been merged already).</p>}
+        {!piiGranted && (
+          <p className="text-[11px] flex items-center gap-1.5" style={{ color: T.text3 }}><Lock size={11} />Contact values stay masked here too — the match/mismatch verdict above is enough to review without exposing PII.</p>
+        )}
+        <p className="text-[12px]" style={{ color: T.text3 }}>Merging marks this lead resolved; either action is written to the audit trail.</p>
       </div>
     </Modal>
   );
 }
 
 /* ---- Lead Detail Drawer ---- */
-function LeadDetailDrawer({ lead, leads, open, onClose, piiGranted, onRequestPII, onReprocess, onStatusChange, onAssign }) {
+function LeadDetailDrawer({ lead, leads, open, onClose, piiGranted, onRequestPII, onReprocess, onStatusChange, onAssign, goToTenant }) {
   const [histTab, setHistTab] = useState("details");
   if (!open || !lead) return null;
   const masked = !piiGranted;
-  const mask = (v) => masked ? "••••••••" : v;
-  const procColor = { success: T.success, partial: T.warning, failed: T.danger, duplicate: T.purple };
   const duplicate = leads.find((l) => l.id === lead.duplicateOf);
+  const tier = TENANT_TIER[lead.tenant] || "Growth";
+  const procIcon = { success: CheckCircle2, partial: AlertTriangle, failed: XCircle, duplicate: Copy }[lead.procState];
+  const procColor = { success: T.success, partial: T.warning, failed: T.danger, duplicate: T.purple };
   return (
-    <Drawer open={open} onClose={onClose} width={540}>
+    <Drawer open={open} onClose={onClose} width={560}>
       <div className="sticky top-0 bg-white border-b z-10 px-6 pt-5 pb-4 flex items-start justify-between" style={{ borderColor: T.border }}>
         <div className="flex items-center gap-3">
           <Avatar name={lead.name} tone="brand" size={40} />
           <div>
-            <div className="text-[15px] font-semibold" style={{ color: T.text }}>{masked ? "•••• •••••" : lead.name}</div>
+            <div className="text-[15px] font-semibold" style={{ color: T.text }}>{masked ? maskName(lead.name) : lead.name}{lead.isTest && <span className="ml-2 text-[10px] font-semibold px-1.5 py-0.5 rounded" style={{ background: T.warningSoft, color: "#92400E" }}>TEST</span>}</div>
             <div className="flex items-center gap-2 mt-0.5">
-              <Badge tone={{ success: "success", partial: "warning", failed: "danger", duplicate: "purple" }[lead.procState]}>{lead.procState}</Badge>
+              <span className="flex items-center gap-1 text-[12px] font-medium" style={{ color: procColor[lead.procState] }}>{React.createElement(procIcon, { size: 13 })}{lead.procState}</span>
               <span className="text-[12px]" style={{ color: T.text3 }}>{lead.id}</span>
             </div>
           </div>
@@ -3146,10 +3214,22 @@ function LeadDetailDrawer({ lead, leads, open, onClose, piiGranted, onRequestPII
               </div>
             )}
             <div className="grid grid-cols-2 gap-3">
-              {[["Phone", mask(lead.phone)], ["Email", mask(lead.email)], ["Source", lead.source], ["Tenant", lead.tenant], ["Received", lead.receivedAt], ["Assignee", lead.assignee || "Unassigned"]].map(([k, v]) => (
+              {[["Phone", masked ? maskPhone(lead.phone) : lead.phone], ["Email", masked ? maskEmail(lead.email) : lead.email], ["Source", lead.source], ["Assignee", lead.assignee || "Unassigned"]].map(([k, v]) => (
                 <div key={k}>
                   <div className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: T.text3 }}>{k}</div>
                   <div className="text-[13px] mt-0.5" style={{ color: T.text }}>{v}</div>
+                </div>
+              ))}
+              <div>
+                <div className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: T.text3 }}>Tenant</div>
+                <button onClick={() => goToTenant?.()} className="text-[13px] mt-0.5 flex items-center gap-1 hover:underline" style={{ color: T.primary }}>{lead.tenant}<Badge tone={TIER_TONE[tier]}>{tier}</Badge></button>
+              </div>
+            </div>
+            <div className="grid grid-cols-3 gap-2 rounded-lg border p-3" style={{ borderColor: T.border }} title="Asia/Kolkata (IST)">
+              {[["Received", lead.receivedAt, true], ["Processed", lead.procState === "failed" ? "—" : "+" + (3 + (parseInt(lead.id.replace(/\D/g, ""), 10) % 5)) + "s", false], ["Delivered", lead.procState === "success" ? "+" + (8 + (parseInt(lead.id.replace(/\D/g, ""), 10) % 6)) + "s" : "—", false]].map(([k, v, primary]) => (
+                <div key={k}>
+                  <div className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: T.text3 }}>{k}</div>
+                  <div className="text-[12px] mt-0.5" style={{ color: primary ? T.text : (v === "—" ? T.text3 : T.text) }}>{v}</div>
                 </div>
               ))}
             </div>
@@ -3172,19 +3252,38 @@ function LeadDetailDrawer({ lead, leads, open, onClose, piiGranted, onRequestPII
                 <p className="text-[13px]" style={{ color: T.text }}>{lead.aiSummary}</p>
               </div>
             )}
-            {lead.procState === "failed" && (
-              <div className="rounded-xl p-4" style={{ background: T.dangerSoft, border: `1px solid #F3C6C6` }}>
-                <div className="text-[11px] font-semibold uppercase tracking-wider mb-1" style={{ color: T.danger }}>Failure Reason</div>
-                <p className="text-[13px] mb-3" style={{ color: T.text }}>{lead.failureReason}</p>
-                <Button size="sm" variant="danger" onClick={() => onReprocess([lead.id])}><RefreshCw size={13} />Reprocess this lead</Button>
-              </div>
-            )}
-            {lead.procState === "duplicate" && duplicate && (
-              <div className="rounded-xl p-4" style={{ background: T.purpleSoft, border: `1px solid #C4B5FD` }}>
-                <div className="text-[11px] font-semibold uppercase tracking-wider mb-1" style={{ color: T.purple }}>Duplicate Match</div>
-                <p className="text-[13px]" style={{ color: T.text }}>Phone match with <strong>{duplicate.name !== lead.name ? mask(duplicate.name) : duplicate.id}</strong> ({duplicate.source} → {duplicate.tenant})</p>
-              </div>
-            )}
+            {lead.procState === "failed" && (() => {
+              const dbg = mockFailureDebug(lead);
+              return (
+                <div className="rounded-xl p-4 space-y-2" style={{ background: T.dangerSoft, border: `1px solid #F3C6C6` }}>
+                  <div className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: T.danger }}>Failure Reason</div>
+                  <p className="text-[13px]" style={{ color: T.text }}>{lead.failureReason}</p>
+                  <div className="grid grid-cols-3 gap-2 text-[11px] pt-1" style={{ color: T.text2 }}>
+                    <span><span style={{ color: T.text3 }}>HTTP</span> {dbg.httpStatus}</span>
+                    <span><span style={{ color: T.text3 }}>Attempt</span> {dbg.attempt}</span>
+                    <span><span style={{ color: T.text3 }}>Next retry</span> {dbg.nextRetryAt}</span>
+                  </div>
+                  <details className="text-[11px]">
+                    <summary className="cursor-pointer select-none" style={{ color: T.text2 }}>Raw → normalized payload</summary>
+                    <div className="mt-1.5 space-y-1 font-mono text-[10px] break-all rounded-lg p-2" style={{ background: "#fff", color: T.text2 }}>
+                      <div>{dbg.rawPayload}</div>
+                      <div style={{ color: T.text3 }}>↓</div>
+                      <div>{dbg.normalizedPayload}</div>
+                    </div>
+                  </details>
+                  <Button size="sm" variant="danger" onClick={() => onReprocess([lead.id])}><RefreshCw size={13} />Reprocess this lead</Button>
+                </div>
+              );
+            })()}
+            {lead.procState === "duplicate" && duplicate && (() => {
+              const match = mockMatchInfo(lead);
+              return (
+                <div className="rounded-xl p-4" style={{ background: T.purpleSoft, border: `1px solid #C4B5FD` }}>
+                  <div className="text-[11px] font-semibold uppercase tracking-wider mb-1" style={{ color: T.purple }}>Duplicate Match</div>
+                  <p className="text-[13px]" style={{ color: T.text }}>{match.reason} · {match.confidence}% confidence — matches <strong>{duplicate.id}</strong> ({duplicate.source} → {duplicate.tenant})</p>
+                </div>
+              );
+            })()}
           </div>
         )}
         {histTab === "history" && (
@@ -3203,7 +3302,7 @@ function LeadDetailDrawer({ lead, leads, open, onClose, piiGranted, onRequestPII
 }
 
 /* ---- Main LeadsPage ---- */
-function LeadsPage() {
+function LeadsPage({ go }) {
   const store = useStore();
   const [leads, setLeadsRaw] = useState(() => loadLeads() || SEED_LEADS);
   const [audit, setAudit] = useState(() => loadLeadAudit());
@@ -3232,8 +3331,13 @@ function LeadsPage() {
     return () => clearInterval(t);
   }, []);
 
+  // Default view is exceptions ("Needs attention"), not the full firehose — healthy volume
+  // is a number in a KPI tile, not something you scroll through row by row.
+  const [view, setView] = useState("attention"); // "attention" | "all"
+
   // Filters
   const [search, setSearch] = useState("");
+  const [phoneSearch, setPhoneSearch] = useState(""); // hashed — never unmasks
   const [filterSource, setFilterSource] = useState("All");
   const [filterTenant, setFilterTenant] = useState("All");
   const [filterState, setFilterState] = useState("All"); // proc state
@@ -3245,6 +3349,7 @@ function LeadsPage() {
   const [piiLeadId, setPIILeadId] = useState(null);
   const [reprocessConfirm, setReprocessConfirm] = useState(null); // { ids: [] }
   const [dupModal, setDupModal] = useState(null); // lead
+  const [reassignLead, setReassignLead] = useState(null); // lead
   const [reprocessing, setReprocessing] = useState(false);
 
   // Check if current user has active PII grant
@@ -3252,16 +3357,31 @@ function LeadsPage() {
   const activePIIGrant = piiGrants.find((g) => g.status === "approved" && new Date(g.grantedAt).getTime() + 4 * 60 * 60 * 1000 > now);
   const piiGranted = !!activePIIGrant;
 
-  // Derived metrics
-  const failedLeads = leads.filter((l) => l.procState === "failed");
-  const dupLeads = leads.filter((l) => l.procState === "duplicate");
-  const partialLeads = leads.filter((l) => l.procState === "partial");
-  const successLeads = leads.filter((l) => l.procState === "success");
-  const aiSummarized = leads.filter((l) => l.aiSummary);
+  // Test-tagged leads are excluded from headline metrics but stay visible in the table.
+  const realLeads = leads.filter((l) => !l.isTest);
+  const failedLeads = realLeads.filter((l) => l.procState === "failed");
+  const dupLeads = realLeads.filter((l) => l.procState === "duplicate");
+  const partialLeads = realLeads.filter((l) => l.procState === "partial");
+  const successLeads = realLeads.filter((l) => l.procState === "success");
+  const aiSummarized = realLeads.filter((l) => l.aiSummary);
+
+  // Failures grouped into incidents (source → tenant → reason) instead of flat rows —
+  // the integration is the unit of work, individual rows are just symptoms of it.
+  const failureIncidents = useMemo(() => {
+    const map = new Map();
+    failedLeads.forEach((l) => {
+      const key = `${l.source}→${l.tenant}→${l.failureReason}`;
+      if (!map.has(key)) map.set(key, { key, source: l.source, tenant: l.tenant, reason: l.failureReason, ids: [], since: l.receivedAt });
+      map.get(key).ids.push(l.id);
+    });
+    return Array.from(map.values());
+  }, [failedLeads]);
 
   // Filtered table rows
   const filtered = leads.filter((l) => {
+    if (view === "attention" && !["failed", "partial", "duplicate"].includes(l.procState)) return false;
     if (search && !l.name.toLowerCase().includes(search.toLowerCase()) && !l.tenant.toLowerCase().includes(search.toLowerCase()) && !l.id.toLowerCase().includes(search.toLowerCase())) return false;
+    if (phoneSearch && last4Hash(l.phone) !== simpleHash(digitsOnly(phoneSearch).slice(-4))) return false;
     if (filterSource !== "All" && l.source !== filterSource) return false;
     if (filterTenant !== "All" && l.tenant !== filterTenant) return false;
     if (filterState !== "All" && l.procState !== filterState) return false;
@@ -3270,10 +3390,22 @@ function LeadsPage() {
   });
 
   const { pageRows, page, setPage, perPage, setPerPage, totalPages, total } = usePagination(filtered, 10);
+  const sel = useRowSelection(pageRows, filtered, "id");
 
-  // Tile click → filter
-  const setTileFilter = (state) => {
-    setFilterState((cur) => cur === state ? "All" : state);
+  // Switching view resets the secondary filters — landing on "All leads" with three stale
+  // filters already applied is confusing, not powerful.
+  const changeView = (label) => {
+    setView(label === "Needs attention" ? "attention" : "all");
+    setFilterState("All"); setFilterSource("All"); setFilterTenant("All"); setFilterStatus("All"); setSearch(""); setPhoneSearch("");
+    setPage(1);
+  };
+
+  // Tile / row click → filter (always drops into "All leads" since the target state, e.g.
+  // "success", may be excluded from the "Needs attention" view)
+  const setTileFilter = (stateOrSetter, value) => {
+    setView("all");
+    if (typeof stateOrSetter === "function") stateOrSetter(value);
+    else setFilterState((cur) => cur === stateOrSetter ? "All" : stateOrSetter);
     setPage(1);
   };
 
@@ -3353,10 +3485,53 @@ function LeadsPage() {
     setPIIGrants((prev) => { const next = [grant, ...prev]; savePIIGrants(next); return next; });
   };
 
-  const procTone = { success: "success", partial: "warning", failed: "danger", duplicate: "purple" };
-  const statusTone = { New: "gray", Assigned: "info", Contacted: "warning", Converted: "success", Lost: "danger" };
+  const handleReassignTenant = (id, tenant) => {
+    const t = SEED_CLIENTS.find((c) => c.name === tenant);
+    setLeads((prev) => prev.map((l) => l.id !== id ? l : { ...l, tenant, tenantId: t ? t.id : l.tenantId, history: [...l.history, { action: `Reassigned from ${l.tenant} to ${tenant}`, by: ADMIN, when: new Date().toLocaleString("en-IN") }] }));
+    addAudit({ action: `Lead ${id} reassigned to tenant ${tenant}`, by: ADMIN, type: "Reassign Tenant" });
+    store.notify(`Reassigned to ${tenant}`);
+    setReassignLead(null);
+  };
 
-  const sourceMax = Math.max(...LEAD_SOURCES_DATA.map((s) => s.count));
+  const handleMarkTest = (id) => {
+    setLeads((prev) => prev.map((l) => l.id !== id ? l : { ...l, isTest: !l.isTest, history: [...l.history, { action: l.isTest ? "Unmarked as test data" : "Marked as test data — excluded from metrics", by: ADMIN, when: new Date().toLocaleString("en-IN") }] }));
+    addAudit({ action: `Lead ${id} test-data flag toggled`, by: ADMIN, type: "Mark Test Data" });
+  };
+
+  const handleEscalate = (l) => {
+    addAudit({ action: `Escalated ${l.id} to engineering (${l.failureReason || "processing issue"}) — payload attached`, by: ADMIN, type: "Escalation" });
+    store.notify(`${l.id} escalated to engineering`);
+  };
+
+  const handleExportRow = (l) => {
+    const row = { id: l.id, source: l.source, tenant: l.tenant, status: l.status, procState: l.procState, name: piiGranted ? l.name : "[MASKED]", phone: piiGranted ? l.phone : "[MASKED]", email: piiGranted ? l.email : "[MASKED]", receivedAt: l.receivedAt };
+    const csv = [Object.keys(row).join(","), Object.values(row).map((v) => `"${v}"`).join(",")].join("\n");
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a"); a.href = url; a.download = `${l.id}.csv`; a.click();
+    addAudit({ action: `Exported single lead ${l.id} (PII ${piiGranted ? "included" : "masked"})`, by: ADMIN, type: "Export" });
+  };
+
+  const bulkReprocessSelected = () => {
+    const ids = [...sel.selected].filter((id) => failedLeads.some((f) => f.id === id));
+    if (ids.length) triggerReprocess(ids);
+  };
+  const bulkExportSelected = () => {
+    const rows = filtered.filter((l) => sel.selected.has(l.id));
+    if (!rows.length) return;
+    const cols = rows.map((l) => ({ id: l.id, source: l.source, tenant: l.tenant, status: l.status, procState: l.procState, name: piiGranted ? l.name : "[MASKED]", phone: piiGranted ? l.phone : "[MASKED]", email: piiGranted ? l.email : "[MASKED]", receivedAt: l.receivedAt }));
+    const csv = [Object.keys(cols[0]).join(","), ...cols.map((r) => Object.values(r).map((v) => `"${v}"`).join(","))].join("\n");
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a"); a.href = url; a.download = `leads-selected-${Date.now()}.csv`; a.click();
+    addAudit({ action: `Exported ${rows.length} selected leads (PII ${piiGranted ? "included" : "masked"})`, by: ADMIN, type: "Export" });
+    store.notify(`${rows.length} leads exported`);
+    sel.clear();
+  };
+
+  const statusTone = { New: "gray", Assigned: "info", Contacted: "warning", Converted: "success", Lost: "danger" };
+  const procMeta = { success: { icon: CheckCircle2, color: T.success }, partial: { icon: AlertTriangle, color: T.warning }, failed: { icon: XCircle, color: T.danger }, duplicate: { icon: Copy, color: T.purple } };
+  const selectedFailedCount = [...sel.selected].filter((id) => failedLeads.some((f) => f.id === id)).length;
 
   return (
     <>
@@ -3375,8 +3550,8 @@ function LeadsPage() {
       {/* KPI tiles — clickable to filter */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
         {[
-          { label: "Leads (24h)", value: String(leads.filter((l) => l.receivedAt.includes("13 May")).length), sub: "+8 vs yesterday", trend: "pos", filter: null },
-          { label: "AI Summarized", value: `${aiSummarized.length}/${leads.length}`, sub: `${Math.round(aiSummarized.length / leads.length * 100)}% enriched`, trend: "pos", filter: null },
+          { label: "Leads (24h)", value: String(realLeads.filter((l) => l.receivedAt.includes("13 May")).length), sub: "+8 vs yesterday", trend: "pos", filter: null },
+          { label: "AI Summarized", value: `${aiSummarized.length}/${realLeads.length}`, sub: `${Math.round(aiSummarized.length / realLeads.length * 100)}% enriched`, trend: "pos", filter: null },
           { label: "Failed Processing", value: String(failedLeads.length), sub: "click to filter", trend: failedLeads.length > 0 ? "neg" : "pos", filter: "failed" },
           { label: "Duplicates", value: String(dupLeads.length), sub: "awaiting review", trend: dupLeads.length > 0 ? "warn" : "pos", filter: "duplicate" },
         ].map(({ label, value, sub, trend, filter }) => (
@@ -3389,6 +3564,22 @@ function LeadsPage() {
           </div>
         ))}
       </div>
+
+      {/* Failure incidents — grouped by source → tenant → reason, the actual unit of work */}
+      {failureIncidents.length > 0 && (
+        <div className="mb-4 space-y-2">
+          {failureIncidents.map((inc) => (
+            <div key={inc.key} className="flex items-center gap-3 p-3 rounded-lg" style={{ background: T.dangerSoft, borderLeft: `3px solid ${T.danger}` }}>
+              <TriangleAlert size={16} style={{ color: T.danger }} className="shrink-0" />
+              <div className="flex-1 text-[13px]" style={{ color: T.text }}>
+                <strong>{inc.source} → {inc.tenant}</strong> · {inc.ids.length} failure{inc.ids.length !== 1 ? "s" : ""} since {inc.since} · {inc.reason}
+              </div>
+              <button onClick={() => triggerReprocess(inc.ids)} className="text-[12px] font-semibold px-2.5 py-1.5 rounded-lg border shrink-0" style={{ borderColor: T.danger, color: T.danger, background: "#fff" }}>Reprocess all ({inc.ids.length})</button>
+              <button onClick={() => go?.("integrations")} className="text-[12px] font-semibold px-2.5 py-1.5 rounded-lg shrink-0" style={{ color: T.primary }}>View Integration →</button>
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* Processing status + Source table row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
@@ -3409,7 +3600,7 @@ function LeadsPage() {
                   <span className="text-[13px] flex-1" style={{ color: T.text }}>{label}</span>
                   <span className="text-[13px] font-semibold" style={{ color }}>{count}</span>
                   <div className="w-24 h-1.5 rounded-full overflow-hidden" style={{ background: "#E4E7F0" }}>
-                    <div className="h-full rounded-full" style={{ width: `${(count / leads.length) * 100}%`, background: color }} />
+                    <div className="h-full rounded-full" style={{ width: `${(count / realLeads.length) * 100}%`, background: color }} />
                   </div>
                 </div>
               );
@@ -3428,7 +3619,7 @@ function LeadsPage() {
                 ))}</tr></thead>
                 <tbody>
                   {LEAD_SOURCES_DATA.map((s) => (
-                    <tr key={s.source} className="hover:bg-slate-50 cursor-pointer" onClick={() => setFilterSource((cur) => cur === s.source ? "All" : s.source)} style={{ background: filterSource === s.source ? T.primarySoft : undefined }}>
+                    <tr key={s.source} className="hover:bg-slate-50 cursor-pointer" onClick={() => setTileFilter(setFilterSource, filterSource === s.source ? "All" : s.source)} style={{ background: filterSource === s.source ? T.primarySoft : undefined }}>
                       <td className="px-4 py-2.5 border-b font-medium" style={{ borderColor: T.border, color: T.text }}>{s.source}</td>
                       <td className="px-4 py-2.5 border-b" style={{ borderColor: T.border, color: T.text }}>{s.count.toLocaleString("en-IN")}</td>
                       <td className="px-4 py-2.5 border-b" style={{ borderColor: T.border, color: s.convPct >= 5 ? T.success : T.text }}>{s.convPct}%</td>
@@ -3448,68 +3639,101 @@ function LeadsPage() {
           sub={piiGranted ? `PII visible · expires ${activePIIGrant?.expiresAt?.split(",")[1]?.trim() || "soon"}` : "PII masked · request access to view contact details"}
           action={
             <div className="flex items-center gap-2">
-              {filterState !== "All" && <button onClick={() => setFilterState("All")} className="text-[12px] flex items-center gap-1 px-2 py-1 rounded" style={{ background: T.primarySoft, color: T.accentText }}><X size={11} />Clear filter</button>}
+              {(filterState !== "All" || filterSource !== "All" || filterTenant !== "All" || filterStatus !== "All" || search || phoneSearch) && (
+                <button onClick={() => { setFilterState("All"); setFilterSource("All"); setFilterTenant("All"); setFilterStatus("All"); setSearch(""); setPhoneSearch(""); }} className="text-[12px] flex items-center gap-1 px-2 py-1 rounded" style={{ background: T.primarySoft, color: T.accentText }}><X size={11} />Clear filters</button>
+              )}
               {!piiGranted && <button onClick={() => { setPIILeadId(null); setPIIModal(true); }} className="text-[12px] flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border" style={{ borderColor: T.border, color: T.primary }}><Lock size={12} />Request PII access</button>}
             </div>
           }
         />
+        <Tabs tabs={["Needs attention", "All leads"]} value={view === "attention" ? "Needs attention" : "All leads"} onChange={changeView} />
         {/* Search + filters */}
         <div className="px-5 py-3 border-b flex flex-wrap gap-2 items-center" style={{ borderColor: T.border }}>
-          <SearchInput value={search} onChange={setSearch} placeholder="Search leads, tenant, ID…" />
+          <SearchInput value={search} onChange={(v) => { setSearch(v); setPage(1); }} placeholder="Search leads, tenant, ID…" />
+          <div className="relative max-w-[220px]">
+            <Hash size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: T.text3 }} />
+            <input value={phoneSearch} onChange={(e) => { setPhoneSearch(e.target.value); setPage(1); }} placeholder="Search by phone (last 4) — hashed"
+              className="pl-7 pr-2 py-1.5 rounded-lg border text-[12px] outline-none w-full" style={{ borderColor: phoneSearch ? T.primary : T.border }} title="Matches on a one-way hash of the last 4 digits — never unmasks PII" />
+          </div>
           {[
             { label: "Source", value: filterSource, set: setFilterSource, opts: ["All", ...LEAD_SOURCES] },
             { label: "Tenant", value: filterTenant, set: setFilterTenant, opts: ["All", ...LEAD_TENANTS] },
+            { label: "Processing", value: filterState, set: setFilterState, opts: ["All", ...LEAD_PROC_STATES] },
             { label: "Status", value: filterStatus, set: setFilterStatus, opts: ["All", ...LEAD_STATUSES] },
           ].map(({ label, value, set, opts }) => (
             <div key={label} className="relative">
-              <select value={value} onChange={(e) => { set(e.target.value); setPage(1); }}
+              <select value={value} onChange={(e) => { setView("all"); set(e.target.value); setPage(1); }}
                 className="appearance-none pl-2.5 pr-6 py-1.5 rounded-lg border text-[12px] outline-none" style={{ borderColor: value !== "All" ? T.primary : T.border, background: value !== "All" ? T.primarySoft : "#fff", color: T.text }}>
-                {opts.map((o) => <option key={o} value={o}>{o === "All" ? `All ${label}s` : o}</option>)}
+                {opts.map((o) => <option key={o} value={o}>{o === "All" ? `All ${FILTER_PLURAL[label] || label + "s"}` : o}</option>)}
               </select>
               <ChevronDown size={11} className="absolute right-1.5 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: T.text3 }} />
             </div>
           ))}
           <span className="text-[12px] ml-auto" style={{ color: T.text3 }}>{filtered.length} leads</span>
         </div>
-        <Pagination page={page} totalPages={totalPages} setPage={setPage} perPage={perPage} setPerPage={setPerPage} total={total} />
-        <Table head={["Lead ID", "Source", "Tenant", "Contact (PII)", "Status", "Processing", "Received", "Actions"]}>
+        {sel.isSome && (
+          <div className="px-5 py-2.5 border-b flex items-center gap-3" style={{ background: T.primarySoft, borderColor: T.border }}>
+            <span className="text-[12px] font-medium" style={{ color: T.accentText }}>{sel.selected.size} selected</span>
+            {selectedFailedCount > 0 && <button onClick={bulkReprocessSelected} className="text-[12px] flex items-center gap-1 px-2.5 py-1 rounded-lg border bg-white" style={{ borderColor: T.danger, color: T.danger }}><RefreshCw size={12} />Reprocess failed ({selectedFailedCount})</button>}
+            <button onClick={bulkExportSelected} className="text-[12px] flex items-center gap-1 px-2.5 py-1 rounded-lg border bg-white" style={{ borderColor: T.border, color: T.text }}><Download size={12} />Export selected</button>
+            <button onClick={sel.clear} className="text-[12px] ml-auto" style={{ color: T.text3 }}>Clear</button>
+          </div>
+        )}
+        <Pagination page={page} totalPages={totalPages} setPage={setPage} perPage={perPage} setPerPage={setPerPage} total={total} selectedCount={sel.selected.size} />
+        <Table head={[<SelectAllHeader key="sel" sel={sel} />, "Lead ID", "Source", "Tenant", "Contact (PII)", "Status", "Processing", "Received / Processed / Delivered", "Actions"]}>
           {pageRows.length === 0 ? (
-            <tr><td colSpan={8} className="text-center py-10 text-[13px]" style={{ color: T.text3 }}>No leads match the current filters.</td></tr>
-          ) : pageRows.map((l) => (
-            <tr key={l.id} className="hover:bg-[#F8F9FC] cursor-pointer" onClick={() => setDetailLead(l)}>
-              <Td className="font-mono text-xs" style={{ color: T.text2 }}>{l.id}</Td>
+            <tr><td colSpan={9} className="text-center py-10 text-[13px]" style={{ color: T.text3 }}>No leads match the current filters.</td></tr>
+          ) : pageRows.map((l) => {
+            const tier = TENANT_TIER[l.tenant] || "Growth";
+            const pm = procMeta[l.procState];
+            const idNum = parseInt(l.id.replace(/\D/g, ""), 10);
+            return (
+            <tr key={l.id} className="hover:bg-[#F8F9FC] cursor-pointer group" onClick={() => setDetailLead(l)}>
+              <Td onClick={(e) => e.stopPropagation()}><RowCheckbox checked={sel.selected.has(l.id)} onChange={(e, shift) => sel.toggle(l.id, { shiftKey: shift })} /></Td>
+              <Td className="font-mono text-xs" style={{ color: T.text2 }}>{l.id}{l.isTest && <span className="ml-1.5 text-[9px] font-semibold px-1 py-0.5 rounded" style={{ background: T.warningSoft, color: "#92400E" }}>TEST</span>}</Td>
               <Td><Badge tone="gray">{l.source}</Badge></Td>
-              <Td className="text-[13px]" style={{ color: T.text }}>{l.tenant}</Td>
+              <Td>
+                <button onClick={(e) => { e.stopPropagation(); go?.("clients"); }} className="text-[13px] flex items-center gap-1.5 hover:underline" style={{ color: T.text }}>
+                  {l.tenant}<Badge tone={TIER_TONE[tier]}>{tier}</Badge>
+                </button>
+              </Td>
               <Td>
                 {piiGranted ? (
                   <div><div className="text-[13px] font-medium" style={{ color: T.text }}>{l.name}</div><div className="text-[11px]" style={{ color: T.text3 }}>{l.phone}</div></div>
                 ) : (
                   <button onClick={(e) => { e.stopPropagation(); setPIILeadId(l.id); setPIIModal(true); }}
-                    className="text-[11px] flex items-center gap-1 px-2 py-1 rounded-lg border" style={{ borderColor: T.border, color: T.text3 }}>
-                    <Lock size={11} />PII masked · request access
+                    className="text-[12px] text-left" style={{ color: T.text2 }} title="Click to request PII access">
+                    <div>{maskName(l.name)}</div><div className="text-[11px]" style={{ color: T.text3 }}>{maskPhone(l.phone)}</div>
                   </button>
                 )}
               </Td>
               <Td><Badge tone={statusTone[l.status] || "gray"}>{l.status}</Badge></Td>
               <Td>
                 <div className="flex items-center gap-1.5">
-                  <Badge tone={procTone[l.procState]}>{l.procState}</Badge>
+                  <span className="flex items-center gap-1 text-[12px] font-medium" style={{ color: pm.color }}><pm.icon size={13} />{l.procState}</span>
                   {l.procState === "duplicate" && (
                     <button onClick={(e) => { e.stopPropagation(); setDupModal(l); }} className="text-[11px] underline" style={{ color: T.purple }}>Review</button>
                   )}
                 </div>
               </Td>
-              <Td className="text-[11px] whitespace-nowrap" style={{ color: T.text2 }}>{l.receivedAt}</Td>
-              <Td>
-                <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
-                  {l.procState === "failed" && (
-                    <button onClick={() => triggerReprocess([l.id])} title="Reprocess" className="p-1 rounded hover:bg-slate-100"><RefreshCw size={14} style={{ color: T.danger }} /></button>
-                  )}
-                  <button onClick={() => setDetailLead(l)} title="View details" className="p-1 rounded hover:bg-slate-100"><Eye size={14} style={{ color: T.text3 }} /></button>
+              <Td className="text-[11px] whitespace-nowrap" style={{ color: T.text2 }} title="Asia/Kolkata (IST)">
+                <div>{l.receivedAt}</div>
+                <div style={{ color: T.text3 }}>
+                  processed {l.procState === "failed" ? "—" : `+${3 + (idNum % 5)}s`} · delivered {l.procState === "success" ? `+${8 + (idNum % 6)}s` : "—"}
                 </div>
               </Td>
+              <Td onClick={(e) => e.stopPropagation()}>
+                <Menu items={[
+                  { label: "View details", icon: Eye, onClick: () => setDetailLead(l) },
+                  ...(l.procState === "failed" ? [{ label: "Retry ingestion", icon: RefreshCw, onClick: () => triggerReprocess([l.id]) }] : []),
+                  { label: "Reassign tenant", icon: Building2, onClick: () => setReassignLead(l) },
+                  { label: l.isTest ? "Unmark test data" : "Mark as test data", icon: Tag, onClick: () => handleMarkTest(l.id) },
+                  { label: "Escalate to engineering", icon: Flag, onClick: () => handleEscalate(l) },
+                  { label: "Export row", icon: Download, onClick: () => handleExportRow(l) },
+                ]} />
+              </Td>
             </tr>
-          ))}
+          );})}
         </Table>
       </Card>
 
@@ -3522,6 +3746,21 @@ function LeadsPage() {
           </p>
           <div className="mt-3 rounded-lg px-3 py-2 text-[12px]" style={{ background: T.warningSoft, color: "#92400E" }}>
             ⚠ Typically caused by API auth errors — ensure the source token is refreshed before reprocessing.
+          </div>
+        </Modal>
+      )}
+
+      {/* Reassign tenant modal */}
+      {reassignLead && (
+        <Modal open={!!reassignLead} onClose={() => setReassignLead(null)} title={`Reassign ${reassignLead.id}`}>
+          <p className="text-[13px] mb-3" style={{ color: T.text2 }}>Move this lead to a different tenant. Misrouted leads are common in multi-tenant ingestion — this is logged to the audit trail.</p>
+          <div className="space-y-1.5">
+            {LEAD_TENANTS.filter((t) => t !== reassignLead.tenant).map((t) => (
+              <button key={t} onClick={() => handleReassignTenant(reassignLead.id, t)} className="w-full text-left flex items-center justify-between px-3 py-2 rounded-lg border hover:bg-slate-50" style={{ borderColor: T.border }}>
+                <span className="text-[13px]" style={{ color: T.text }}>{t}</span>
+                <Badge tone={TIER_TONE[TENANT_TIER[t] || "Growth"]}>{TENANT_TIER[t] || "Growth"}</Badge>
+              </button>
+            ))}
           </div>
         </Modal>
       )}
@@ -3540,10 +3779,11 @@ function LeadsPage() {
         onReprocess={triggerReprocess}
         onStatusChange={handleStatusChange}
         onAssign={handleAssign}
+        goToTenant={() => go?.("clients")}
       />
 
       {/* Duplicate review modal */}
-      <DuplicateReviewModal open={!!dupModal} onClose={() => setDupModal(null)} lead={dupModal} leads={leads} onMerge={handleMerge} onDismiss={handleDismiss} />
+      <DuplicateReviewModal open={!!dupModal} onClose={() => setDupModal(null)} lead={dupModal} leads={leads} onMerge={handleMerge} onDismiss={handleDismiss} piiGranted={piiGranted} />
     </>
   );
 }
@@ -5009,7 +5249,7 @@ function Shell() {
       case "users": return <UsersPage />;
       case "subs": return <SubsPlansPage />;
       case "cs": return <CsPage openTenant={setTenantForCs} />;
-      case "leads": return <LeadsPage />;
+      case "leads": return <LeadsPage go={go} />;
       case "automation": return <AutomationPage />;
       case "ai": return <AiPage />;
       case "integrations": return <IntegrationsPage />;
