@@ -1211,7 +1211,7 @@ function Tenant360({ tenant, onClose, starred, onToggleStar }) {
                 <div className="grid grid-cols-2 gap-4">
                   <Field label="Account Manager">{c.am}</Field>
                   <Field label="GST Number"><span className="font-mono text-xs">{c.gst}</span></Field>
-                  <Field label="Seats">{c.employees} used / {c.seats} licensed</Field>
+                  <Field label="Seats">{tenantUsers.length} used / {c.seats} licensed</Field>
                   <Field label="AI Summaries Used">{c.aiUsed}</Field>
                   <Field label="Storage Usage">{c.usage} GB</Field>
                   <Field label="Last Login">{c.lastLogin}</Field>
@@ -1333,7 +1333,7 @@ function Tenant360({ tenant, onClose, starred, onToggleStar }) {
         <Field label="Number of seats to add">
           <input type="number" value={seatN} onChange={(e) => setSeatN(Number(e.target.value))} className="w-full mt-1 px-3 py-2 rounded-lg border text-[13px] outline-none focus:ring-2" style={{ borderColor: T.border, "--tw-ring-color": T.ring }} />
         </Field>
-        <p className="text-xs mt-3" style={{ color: T.text2 }}>Current: {c.seats} licensed · {c.employees} in use. Billing adjusts on next cycle.</p>
+        <p className="text-xs mt-3" style={{ color: T.text2 }}>Current: {c.seats} licensed · {tenantUsers.length} in use. Billing adjusts on next cycle.</p>
       </Modal>
     </Drawer>
   );
@@ -1465,6 +1465,12 @@ function ClientsPage() {
   const [starred, setStarred] = useState(() => new Set());
   const toggleStar = (id) => setStarred((s) => { const n = new Set(s); n.has(id) ? n.delete(id) : n.add(id); return n; });
 
+  const usedSeatsMap = useMemo(() => {
+    const m = {};
+    store.users.forEach((u) => { m[u.tenant] = (m[u.tenant] || 0) + 1; });
+    return m;
+  }, [store.users]);
+
   const industries = ["All", ...Array.from(new Set(store.clients.map((c) => c.industry)))];
 
   const rows = useMemo(() => store.clients.filter((c) =>
@@ -1530,7 +1536,7 @@ function ClientsPage() {
               <Td className="font-medium">{c.leads.toLocaleString("en-IN")}</Td>
               <Td>{c.aiUsed}</Td>
               <Td className="text-xs" style={{ color: T.text2 }}>{c.usage} GB</Td>
-              <Td className="text-xs">{c.employees}/{c.seats}</Td>
+              <Td className="text-xs">{usedSeatsMap[c.name] || 0}/{c.seats}</Td>
               <Td className="font-medium">{c.mrr ? fmtINR(c.mrr) : "—"}</Td>
               <Td><Progress value={c.health} /></Td>
               <Td>{statusBadge(c.churnRisk)}</Td>
