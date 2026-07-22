@@ -42,13 +42,13 @@ export function Layout() {
   const filter = location.state || null;
 
   return (
-    <div className="flex min-h-screen font-sans" style={{ background: T.bg, color: T.text }}>
+    <div className="flex h-screen overflow-hidden font-sans" style={{ background: T.bg, color: T.text }}>
       <style>{`@keyframes slideIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}} aside nav::-webkit-scrollbar{width:4px} aside nav::-webkit-scrollbar-thumb{background:${T.sidebarHover};border-radius:4px}`}</style>
       {/* Sidebar */}
       <div className="shrink-0 py-3" style={{ position: "sticky", top: 0, height: "100vh" }}>
         <Sidebar active={active} onNav={go} collapsed={sidebarCollapsed} />
       </div>
-      <main className="flex-1 min-w-0 flex flex-col min-h-screen">
+      <main className="flex-1 min-w-0 flex flex-col min-h-0">
         <ImpersonationBanner />
         {/* Floating topbar */}
         <div className="px-3 pt-3 shrink-0">
