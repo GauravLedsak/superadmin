@@ -1,7 +1,15 @@
-import LedsakSuperAdmin from './LedsakSuperAdmin.jsx'
+import { BrowserRouter } from "react-router-dom";
+import { StoreProvider } from "./store/StoreContext.jsx";
+import { Layout } from "./layout/Layout.jsx";
 
 function App() {
-  return <LedsakSuperAdmin />
+  return (
+    <BrowserRouter>
+      <StoreProvider>
+        <Layout />
+      </StoreProvider>
+    </BrowserRouter>
+  );
 }
 
-export default App
+export default App;
