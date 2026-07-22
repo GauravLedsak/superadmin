@@ -1130,7 +1130,7 @@ function SearchInput({ value, onChange, placeholder }) {
 /* ============================================================
    TENANT 360 — drawer drill-down
    ============================================================ */
-function Tenant360({ tenant, onClose, starred, onToggleStar }) {
+function Tenant360({ tenant, onClose, starred, onToggleStar, go }) {
   const store = useStore();
   const [tab, setTab] = useState("Overview");
   const [seatModal, setSeatModal] = useState(false);
@@ -1195,7 +1195,7 @@ function Tenant360({ tenant, onClose, starred, onToggleStar }) {
           <Button size="sm" onClick={() => setSeatModal(true)}><UserPlus size={13} /> Add seats</Button>
           {c.status === "Trial" && <Button size="sm" onClick={() => store.extendTrial(c.id, 14)}><Clock size={13} /> Extend trial</Button>}
         </div>
-        <div className="px-6"><Tabs tabs={["Overview", "Users", "Billing", "Activity", "Tasks"]} value={tab} onChange={setTab} /></div>
+        <div className="px-6"><Tabs tabs={["Overview", "Users", "Billing", "Activity", "Tasks", "Automations"]} value={tab} onChange={setTab} /></div>
       </div>
 
       <div className="px-6 py-5">
@@ -1320,6 +1320,39 @@ function Tenant360({ tenant, onClose, starred, onToggleStar }) {
             </Table>
           </Card>
         )}
+        {tab === "Automations" && (() => {
+          const tenantLogs = (loadAutomationLogs() || SEED_AUTOMATION_LOGS).filter((l) => l.tenantName === c.name);
+          const counts = { Success: 0, Partial: 0, Failed: 0 };
+          tenantLogs.forEach((l) => { counts[l.overallStatus] = (counts[l.overallStatus] || 0) + 1; });
+          const needsReview = tenantLogs.filter((l) => l.overallStatus !== "Success");
+          return (
+            <div className="space-y-4">
+              <div className="rounded-lg border px-3.5 py-2.5 flex items-start gap-2" style={{ borderColor: T.border, background: T.subtle }}>
+                <AlertTriangle size={13} style={{ color: T.text3 }} className="shrink-0 mt-0.5" />
+                <p className="text-[12px]" style={{ color: T.text2 }}>Internal Ops automation runs only (health/renewal/payment/onboarding/status). LEDSAK's tenant-facing CRM automation system runs on a separate product with no shared pipeline into this admin app.</p>
+              </div>
+              <div className="grid grid-cols-3 gap-3">
+                <Kpi label="Success" value={String(counts.Success)} trend="pos" />
+                <Kpi label="Partial" value={String(counts.Partial)} trend={counts.Partial > 0 ? "warn" : undefined} />
+                <Kpi label="Failed" value={String(counts.Failed)} trend={counts.Failed > 0 ? "neg" : undefined} />
+              </div>
+              <Card>
+                <CardHeader title="Runs needing review" sub={needsReview.length === 0 ? "All recent runs succeeded" : `${needsReview.length} partial/failed run(s)`}
+                  action={<Button size="sm" onClick={() => go?.("automation", { tenant: c.name, tab: "Internal Ops Logs" })}>View full run history <ArrowRight size={13} /></Button>} />
+                {needsReview.length > 0 && (
+                  <CardBody className="space-y-2">
+                    {needsReview.map((l) => (
+                      <div key={l.id} className="flex items-center justify-between py-2 border-b last:border-0" style={{ borderColor: T.border }}>
+                        <div><div className="text-[13px] font-medium" style={{ color: T.text }}>{l.automationTitle}</div><div className="text-xs" style={{ color: T.text2 }}>{OPS_TRIGGER_LABEL[l.triggerType]} · {l.when}</div></div>
+                        <Badge tone={opsStatusTone[l.overallStatus]}>{l.overallStatus}</Badge>
+                      </div>
+                    ))}
+                  </CardBody>
+                )}
+              </Card>
+            </div>
+          );
+        })()}
       </div>
 
       <AssignPlaybookModal tenant={assignPlaybookOpen ? c : null} onClose={() => setAssignPlaybookOpen(false)} />
@@ -1454,7 +1487,7 @@ function AddTenantModal({ open, onClose, onCreated }) {
    CLIENTS — full data, working filters, provisioning
    ============================================================ */
 
-function ClientsPage() {
+function ClientsPage({ go }) {
   const store = useStore();
   const [q, setQ] = useState("");
   const [status, setStatus] = useState("All");
@@ -1548,7 +1581,7 @@ function ClientsPage() {
           {!rows.length && <tr><Td colSpan={14} className="text-center py-10" style={{ color: T.text3 }}>No clients match these filters</Td></tr>}
         </Table>
       </Card>
-      <Tenant360 tenant={selected} onClose={() => setSelected(null)} starred={selected ? starred.has(selected.id) : false} onToggleStar={toggleStar} />
+      <Tenant360 tenant={selected} onClose={() => setSelected(null)} starred={selected ? starred.has(selected.id) : false} onToggleStar={toggleStar} go={go} />
       <AddTenantModal open={addTenantOpen} onClose={() => setAddTenantOpen(false)} onCreated={(client) => { setPage(1); setSelected(client); }} />
     </div>
   );
@@ -4501,11 +4534,12 @@ function AutomationRunDrawer({ run, open, onClose }) {
 
 /* ---- Automation Logs — Failed/Partial surfaced first, same lesson as Queue Monitor and
    Lead & Record Mgmt: don't bury the runs that need attention in a table of healthy ones. ---- */
-function AutomationLogsSection() {
+function AutomationLogsSection({ openTenant, initialTenantFilter }) {
+  const store = useStore();
   const [logs] = useState(() => loadAutomationLogs() || SEED_AUTOMATION_LOGS);
   const [view, setView] = useState("attention"); // "attention" | "all"
   const [filterAutomation, setFilterAutomation] = useState("All");
-  const [filterTenant, setFilterTenant] = useState("All");
+  const [filterTenant, setFilterTenant] = useState(initialTenantFilter || "All");
   const [filterStatus, setFilterStatus] = useState("All");
   const [selectedRun, setSelectedRun] = useState(null);
 
@@ -4531,7 +4565,13 @@ function AutomationLogsSection() {
 
   return (
     <Card className="flex flex-col">
-      <CardHeader title="Automation Logs" sub="Every trigger evaluation and action attempt" action={<Button onClick={handleExport}><Download size={14} />Export CSV</Button>} />
+      <CardHeader title="Internal Ops Automation Logs" sub="Every trigger evaluation and action attempt — Internal Ops automations only" action={<Button onClick={handleExport}><Download size={14} />Export CSV</Button>} />
+      <div className="mx-5 mt-4 rounded-lg border px-3.5 py-2.5 flex items-start gap-2" style={{ borderColor: T.border, background: T.subtle }}>
+        <AlertTriangle size={14} style={{ color: T.text3 }} className="shrink-0 mt-0.5" />
+        <p className="text-[12px]" style={{ color: T.text2 }}>
+          This covers <strong>Internal Ops automations only</strong> (health/renewal/payment/onboarding/status). LEDSAK's tenant-facing CRM automation system (lead routing, WhatsApp sends, pipeline updates) runs on a separate product with no shared pipeline or API into this admin app — its run history isn't available here. That's a backend/data-access gap to scope separately, not something this view can wire in.
+        </p>
+      </div>
       <Tabs tabs={["Needs review", "All runs"]} value={view === "attention" ? "Needs review" : "All runs"} onChange={(v) => { setView(v === "Needs review" ? "attention" : "all"); setPage(1); }} />
       <div className="px-5 py-3 border-b flex flex-wrap gap-2 items-center" style={{ borderColor: T.border }}>
         {[
@@ -4555,7 +4595,9 @@ function AutomationLogsSection() {
         ) : pageRows.map((l) => (
           <tr key={l.id} className="hover:bg-[#F8F9FC] cursor-pointer" onClick={() => setSelectedRun(l)}>
             <Td className="font-medium">{l.automationTitle}</Td>
-            <Td>{l.tenantName}</Td>
+            <Td>
+              <button onClick={(e) => { e.stopPropagation(); const c = store.clients.find((x) => x.name === l.tenantName); if (c) openTenant?.(c); }} className="hover:underline" style={{ color: openTenant ? T.primary : T.text }}>{l.tenantName}</button>
+            </Td>
             <Td className="text-[12px]" style={{ color: T.text2 }}>{OPS_TRIGGER_LABEL[l.triggerType]}</Td>
             <Td className="text-[11px] whitespace-nowrap" style={{ color: T.text2 }}>{l.when}</Td>
             <Td><Badge tone={opsStatusTone[l.overallStatus]}>{l.overallStatus}</Badge></Td>
@@ -4568,17 +4610,17 @@ function AutomationLogsSection() {
   );
 }
 
-function AutomationPage() {
+function AutomationPage({ go, openTenant, filter }) {
   const store = useStore();
-  const [tab, setTab] = useState("Lead Routing");
+  const [tab, setTab] = useState(filter?.tab || "Lead Routing");
   const [rules, setRules] = useState([
     { id: 1, name: "Auto-assign leads", trigger: "New lead", on: true }, { id: 2, name: "Idle lead nudge", trigger: "48h no contact", on: true },
     { id: 3, name: "Churn watch", trigger: "Health < 50", on: true }, { id: 4, name: "Renewal reminder", trigger: "30d before expiry", on: false },
   ]);
   const steps = [{ icon: Zap, t: "Trigger: New lead from CarWale", d: "Webhook received", tone: T.primary }, { icon: Bot, t: "AI: Summarize & score", d: "OpenAI enrichment", tone: T.purple }, { icon: Send, t: "Assign to telecaller", d: "Round-robin by brand", tone: T.success }];
   return (<>
-    <PageHeader title="Automation Center" desc={tab === "Lead Routing" ? "Workflows, triggers and lead-routing rules" : tab === "Internal Ops" ? "LEDSAK's own tenant-state automations — not tenant-facing" : "Every trigger evaluation and action attempt"} />
-    <Tabs tabs={["Lead Routing", "Internal Ops", "Automation Logs"]} value={tab} onChange={setTab} />
+    <PageHeader title="Automation Center" desc={tab === "Lead Routing" ? "Workflows, triggers and lead-routing rules" : tab === "Internal Ops" ? "LEDSAK's own tenant-state automations — not tenant-facing" : "Every trigger evaluation and action attempt — Internal Ops only"} />
+    <Tabs tabs={["Lead Routing", "Internal Ops", "Internal Ops Logs"]} value={tab} onChange={setTab} />
     {tab === "Lead Routing" && (
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <Card className="lg:col-span-2"><CardHeader title="Lead Routing Workflow" sub="Active · 12,480 runs this month" action={<Badge tone="success">Running</Badge>} /><CardBody className="space-y-2">
@@ -4603,7 +4645,7 @@ function AutomationPage() {
       </div>
     )}
     {tab === "Internal Ops" && <OpsAutomationsSection />}
-    {tab === "Automation Logs" && <AutomationLogsSection />}
+    {tab === "Internal Ops Logs" && <AutomationLogsSection openTenant={openTenant} initialTenantFilter={filter?.tenant} />}
   </>);
 }
 
@@ -6026,13 +6068,13 @@ function Shell() {
   const page = (() => {
     switch (active) {
       case "dashboard": return <DashboardPage go={go} />;
-      case "clients": return <ClientsPage />;
+      case "clients": return <ClientsPage go={go} />;
       case "onboarding": return <OnboardingPage />;
       case "users": return <UsersPage />;
       case "subs": return <SubsPlansPage />;
       case "cs": return <CsPage openTenant={setTenantForCs} />;
       case "leads": return <LeadsPage go={go} />;
-      case "automation": return <AutomationPage />;
+      case "automation": return <AutomationPage key={pageParams ? JSON.stringify(pageParams) : "default"} go={go} openTenant={setTenantForCs} filter={pageParams} />;
       case "ai": return <AiPage />;
       case "integrations": return <IntegrationsPage filter={pageParams} />;
       case "comms": return <CommsPage />;
@@ -6063,7 +6105,7 @@ function Shell() {
         <div className={cx("flex-1 min-h-0 px-3 py-3", FIXED_HEIGHT_PAGES.has(active) ? "overflow-hidden flex flex-col" : "overflow-y-auto")}>{page}</div>
       </main>
       <Toast msg={store.toast} />
-      <Tenant360 tenant={tenantForCs} onClose={() => setTenantForCs(null)} />
+      <Tenant360 tenant={tenantForCs} onClose={() => setTenantForCs(null)} go={go} />
     </div>
   );
 }
