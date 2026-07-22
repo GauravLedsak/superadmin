@@ -4575,37 +4575,10 @@ function AutomationPage() {
     { id: 1, name: "Auto-assign leads", trigger: "New lead", on: true }, { id: 2, name: "Idle lead nudge", trigger: "48h no contact", on: true },
     { id: 3, name: "Churn watch", trigger: "Health < 50", on: true }, { id: 4, name: "Renewal reminder", trigger: "30d before expiry", on: false },
   ]);
-  const [newRuleModal, setNewRuleModal] = useState(false);
-  const [newRuleName, setNewRuleName] = useState("");
-  const [newRuleTrigger, setNewRuleTrigger] = useState("");
-  const closeNewRuleModal = () => { setNewRuleModal(false); setNewRuleName(""); setNewRuleTrigger(""); };
-  const saveNewRule = () => {
-    if (!newRuleName.trim() || !newRuleTrigger.trim()) return;
-    setRules((rs) => [{ id: Date.now(), name: newRuleName.trim(), trigger: newRuleTrigger.trim(), on: true }, ...rs]);
-    store.notify(`"${newRuleName.trim()}" added to Active Rules`);
-    closeNewRuleModal();
-  };
   const steps = [{ icon: Zap, t: "Trigger: New lead from CarWale", d: "Webhook received", tone: T.primary }, { icon: Bot, t: "AI: Summarize & score", d: "OpenAI enrichment", tone: T.purple }, { icon: Send, t: "Assign to telecaller", d: "Round-robin by brand", tone: T.success }];
   return (<>
-    <PageHeader title="Automation Center" desc={tab === "Lead Routing" ? "Workflows, triggers and lead-routing rules" : tab === "Internal Ops" ? "LEDSAK's own tenant-state automations — not tenant-facing" : "Every trigger evaluation and action attempt"}
-      actions={tab === "Lead Routing" ? <Button variant="primary" onClick={() => setNewRuleModal(true)}><Plus size={15} /> New Workflow</Button> : null} />
+    <PageHeader title="Automation Center" desc={tab === "Lead Routing" ? "Workflows, triggers and lead-routing rules" : tab === "Internal Ops" ? "LEDSAK's own tenant-state automations — not tenant-facing" : "Every trigger evaluation and action attempt"} />
     <Tabs tabs={["Lead Routing", "Internal Ops", "Automation Logs"]} value={tab} onChange={setTab} />
-    {newRuleModal && (
-      <Modal open onClose={closeNewRuleModal} title="New Workflow Rule"
-        footer={<><Button onClick={closeNewRuleModal}>Cancel</Button><Button variant="primary" disabled={!newRuleName.trim() || !newRuleTrigger.trim()} onClick={saveNewRule}>Save</Button></>}>
-        <div className="space-y-3">
-          <div>
-            <label className="block text-[11px] font-semibold uppercase tracking-wider mb-1.5" style={{ color: T.text3 }}>Rule Name</label>
-            <input value={newRuleName} onChange={(e) => setNewRuleName(e.target.value)} placeholder="e.g. Weekend auto-reply" className="w-full border rounded-lg px-3 py-2 text-[13px] outline-none" style={{ borderColor: T.border }} />
-          </div>
-          <div>
-            <label className="block text-[11px] font-semibold uppercase tracking-wider mb-1.5" style={{ color: T.text3 }}>Trigger</label>
-            <input value={newRuleTrigger} onChange={(e) => setNewRuleTrigger(e.target.value)} placeholder="e.g. No response in 24h" className="w-full border rounded-lg px-3 py-2 text-[13px] outline-none" style={{ borderColor: T.border }} />
-          </div>
-          <p className="text-[12px]" style={{ color: T.text3 }}>New rules are added enabled to Active Rules — toggle off there if you want to stage it first.</p>
-        </div>
-      </Modal>
-    )}
     {tab === "Lead Routing" && (
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <Card className="lg:col-span-2"><CardHeader title="Lead Routing Workflow" sub="Active · 12,480 runs this month" action={<Badge tone="success">Running</Badge>} /><CardBody className="space-y-2">
