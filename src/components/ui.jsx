@@ -188,9 +188,13 @@ export function Kpi({ label, value, sub, trend }) {
 export function Table({ head, children, maxHeight }) {
   return (
     <div className={cx("overflow-auto", !maxHeight && "flex-1 min-h-0")} style={{ maxHeight, minHeight: maxHeight ? 160 : undefined }}>
-      <table className="w-full border-collapse text-[13px]">
+      <table className="w-full border-separate text-[13px]" style={{ borderSpacing: 0 }}>
         <thead><tr>{head.map((h, i) => (
-          <th key={i} className="sticky top-0 z-10 text-left text-[11px] font-semibold uppercase tracking-wider px-3.5 py-2.5 border-b whitespace-nowrap" style={{ color: T.text3, borderColor: T.border, background: T.subtle }}>{h}</th>
+          // box-shadow instead of border-b: with border-collapse, Chromium resolves each
+          // cell's shared bottom border independently at fractional zoom/DPR, so adjacent
+          // columns' lines land on different sub-pixel rows and visibly step/break. An inset
+          // box-shadow paints per-cell with no collapse resolution, so it can't misalign.
+          <th key={i} className="sticky top-0 z-10 text-left text-[11px] font-semibold uppercase tracking-wider px-3.5 py-2.5 whitespace-nowrap" style={{ color: T.text3, boxShadow: `inset 0 -1px 0 ${T.border}`, background: T.subtle }}>{h}</th>
         ))}</tr></thead>
         <tbody>{children}</tbody>
       </table>
@@ -393,7 +397,7 @@ export function BulkActionsMenu({ count, onAction }) {
   );
 }
 export const Td = ({ className, style, children, colSpan }) => (
-  <td colSpan={colSpan} className={cx("px-3.5 py-3 border-b align-middle", className)} style={{ borderColor: T.border, ...style }}>{children}</td>
+  <td colSpan={colSpan} className={cx("px-3.5 py-3 align-middle", className)} style={{ boxShadow: `inset 0 -1px 0 ${T.border}`, ...style }}>{children}</td>
 );
 export function NameCell({ name, sub, tone, onClick, hideAvatar }) {
   return (
