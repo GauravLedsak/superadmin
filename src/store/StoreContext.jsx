@@ -7,6 +7,11 @@ import {
   SEED_ADDON_PRICING, SEED_SUBSCRIPTIONS, SEED_HISTORY, SEED_PLAYBOOKS,
   SEED_TENANT_TASKS, SEED_CONTACT_LOGS,
 } from "../data/seed.js";
+import {
+  SEED_ADMIN_USERS, SEED_ROLES, SEED_SESSIONS, SEED_IP_RESTRICTIONS,
+  SEED_LOGIN_HISTORY, SEED_SECURITY_ALERTS, SEED_API_KEYS, SEED_MFA_CONFIG,
+  emptyPermissions, genApiKeyValue, genKeyId,
+} from "../data/security.js";
 
 export const buildTasksFromPlaybook = (tenant, playbook) => playbook.steps.map((step) => {
   const due = new Date(TODAY);
@@ -53,6 +58,17 @@ export function StoreProvider({ children }) {
   const [spPlaybooks, setSpPlaybooks] = useState(SEED_PLAYBOOKS);
   const [tenantTasks, setTenantTasks] = useState(SEED_TENANT_TASKS);
   const [contactLogs, setContactLogs] = useState(SEED_CONTACT_LOGS);
+  // Security & Access module state — internal LEDSAK admin-team pool, distinct from
+  // `users` (CRM end-users). loginHistory is a static append-only audit trail (no setter
+  // exposed); everything else supports the mutations below.
+  const [adminUsers, setAdminUsers] = useState(SEED_ADMIN_USERS);
+  const [secRoles, setSecRoles] = useState(SEED_ROLES);
+  const [sessions, setSessions] = useState(SEED_SESSIONS);
+  const [ipRestrictions, setIpRestrictions] = useState(SEED_IP_RESTRICTIONS);
+  const [loginHistory] = useState(SEED_LOGIN_HISTORY);
+  const [securityAlerts, setSecurityAlerts] = useState(SEED_SECURITY_ALERTS);
+  const [apiKeys, setApiKeys] = useState(SEED_API_KEYS);
+  const [mfaConfig, setMfaConfig] = useState(SEED_MFA_CONFIG);
 
   const notify = (msg) => { setToast(msg); setTimeout(() => setToast(null), 2600); };
   const addHistory = (entry) => setHistory((h) => [{ id: nextId(), changedDate: NOW, changedBy: ADMIN, ...entry }, ...h]);
@@ -61,6 +77,7 @@ export function StoreProvider({ children }) {
     clients, invoices, users, tickets, onboarding, notifs, toast, impersonating,
     spPlans, addonPricing, subscriptions, history, notify,
     spPlaybooks, tenantTasks, contactLogs,
+    adminUsers, secRoles, sessions, ipRestrictions, loginHistory, securityAlerts, apiKeys, mfaConfig,
     // Original store methods
     setTenantStatus: (id, status) => {
       const prevStatus = clients.find((c) => c.id === id)?.status;
@@ -293,6 +310,184 @@ export function StoreProvider({ children }) {
       setContactLogs((cs) => [log, ...cs]);
       notify(`Contact logged for ${log.tenantName}`);
       return log;
+    },
+    // === SECURITY & ACCESS CONTROL ===
+    // Admin Users
+    createAdmin: (data) => {
+      if (adminUsers.some((a) => a.email.toLowerCase() === data.email.toLowerCase())) { notify("An admin with this email already exists"); return null; }
+      const role = secRoles.find((r) => r.id === data.roleId);
+      const admin = {
+        id: "adm-" + nextId(), name: data.name, email: data.email, phone: data.phone || "",
+        roleId: data.roleId, roleName: role ? role.name : "", mfaEnabled: !!data.requireMfa, mfaMethod: data.requireMfa ? "TOTP" : null,
+        mfaEnrolledDate: data.requireMfa ? NOW : null, lastLogin: "—", activeSessions: 0,
+        status: data.sendInvitation ? "Invited" : "Active", createdDate: NOW, createdBy: ADMIN,
+      };
+      setAdminUsers((as) => [admin, ...as]);
+      addHistory({ entityType: "AdminUser", entityId: admin.id, action: "Admin created", prev: {}, next: { name: admin.name, email: admin.email, role: admin.roleName }, reason: "New admin added" });
+      notify(`${admin.name} added as admin`);
+      return admin;
+    },
+    updateAdmin: (id, updates, reason = "Admin updated") => {
+      let prev = {};
+      setAdminUsers((as) => as.map((a) => {
+        if (a.id !== id) return a;
+        prev = { name: a.name, email: a.email, phone: a.phone, roleId: a.roleId };
+        const role = updates.roleId ? secRoles.find((r) => r.id === updates.roleId) : null;
+        return { ...a, ...updates, roleName: role ? role.name : a.roleName };
+      }));
+      addHistory({ entityType: "AdminUser", entityId: id, action: "Admin updated", prev, next: updates, reason });
+      notify("Admin updated");
+    },
+    suspendAdmin: (id) => {
+      setAdminUsers((as) => as.map((a) => (a.id === id ? { ...a, status: "Suspended" } : a)));
+      addHistory({ entityType: "AdminUser", entityId: id, action: "Admin suspended", prev: { status: "Active" }, next: { status: "Suspended" }, reason: "Manually suspended" });
+      notify("Admin suspended");
+    },
+    reactivateAdmin: (id) => {
+      setAdminUsers((as) => as.map((a) => (a.id === id ? { ...a, status: "Active" } : a)));
+      addHistory({ entityType: "AdminUser", entityId: id, action: "Admin reactivated", prev: { status: "Suspended" }, next: { status: "Active" }, reason: "Manually reactivated" });
+      notify("Admin reactivated");
+    },
+    deactivateAdmin: (id) => {
+      setAdminUsers((as) => as.map((a) => (a.id === id ? { ...a, status: "Deactivated" } : a)));
+      addHistory({ entityType: "AdminUser", entityId: id, action: "Admin deactivated", prev: {}, next: { status: "Deactivated" }, reason: "Manually deactivated" });
+      notify("Admin deactivated");
+    },
+    toggleAdminMfa: (id) => {
+      let nextEnabled = false;
+      setAdminUsers((as) => as.map((a) => {
+        if (a.id !== id) return a;
+        nextEnabled = !a.mfaEnabled;
+        return { ...a, mfaEnabled: nextEnabled, mfaMethod: nextEnabled ? (a.mfaMethod || "TOTP") : null, mfaEnrolledDate: nextEnabled ? NOW : null };
+      }));
+      addHistory({ entityType: "AdminUser", entityId: id, action: nextEnabled ? "MFA enabled" : "MFA disabled", prev: { mfaEnabled: !nextEnabled }, next: { mfaEnabled: nextEnabled }, reason: "Manual toggle" });
+      notify(`MFA ${nextEnabled ? "enabled" : "disabled"}`);
+    },
+    resetAdminPassword: (id) => {
+      const admin = adminUsers.find((a) => a.id === id);
+      addHistory({ entityType: "AdminUser", entityId: id, action: "Password reset requested", prev: {}, next: {}, reason: "Manual reset" });
+      notify(`Password reset link sent to ${admin ? admin.name : "admin"}`);
+    },
+    // Roles
+    createRole: (data) => {
+      const role = { id: "role-" + nextId(), name: data.name, description: data.description || "", type: data.type || "Standard", isSystem: false, createdBy: ADMIN, createdDate: NOW, permissions: emptyPermissions() };
+      setSecRoles((rs) => [...rs, role]);
+      addHistory({ entityType: "Role", entityId: role.id, action: "Role created", prev: {}, next: { name: role.name, type: role.type }, reason: "New role" });
+      notify(`Role "${role.name}" created`);
+      return role;
+    },
+    updateRolePermissions: (id, permissions, reason = "Permissions updated") => {
+      setSecRoles((rs) => rs.map((r) => (r.id === id ? { ...r, permissions } : r)));
+      addHistory({ entityType: "Role", entityId: id, action: "Role permissions updated", prev: {}, next: {}, reason });
+      notify("Permissions saved");
+    },
+    duplicateRole: (id) => {
+      let dup = null;
+      setSecRoles((rs) => {
+        const src = rs.find((r) => r.id === id);
+        if (!src) return rs;
+        dup = { ...src, id: "role-" + nextId(), name: src.name + " (Copy)", isSystem: false, createdBy: ADMIN, createdDate: NOW, permissions: JSON.parse(JSON.stringify(src.permissions)) };
+        return [...rs, dup];
+      });
+      if (dup) { addHistory({ entityType: "Role", entityId: dup.id, action: "Role duplicated", prev: { sourceId: id }, next: { name: dup.name }, reason: "Duplicated" }); notify(`Role duplicated as "${dup.name}"`); }
+      return dup;
+    },
+    deleteRole: (id) => {
+      const assigned = adminUsers.filter((a) => a.roleId === id).length;
+      const role = secRoles.find((r) => r.id === id);
+      if (!role || role.isSystem || assigned > 0) { notify("Role can't be deleted — reassign its admins first"); return; }
+      setSecRoles((rs) => rs.filter((r) => r.id !== id));
+      addHistory({ entityType: "Role", entityId: id, action: "Role deleted", prev: { name: role.name }, next: {}, reason: "Deleted" });
+      notify(`Role "${role.name}" deleted`);
+    },
+    // Sessions
+    revokeSession: (sessionId) => {
+      const sess = sessions.find((s) => s.id === sessionId);
+      if (sess?.isCurrent) { notify("Can't revoke your current session"); return; }
+      setSessions((ss) => ss.filter((s) => s.id !== sessionId));
+      addHistory({ entityType: "Session", entityId: sessionId, action: "Session revoked", prev: { admin: sess?.adminName }, next: {}, reason: "Manually revoked" });
+      notify("Session revoked");
+    },
+    revokeAllSessions: (adminId) => {
+      setSessions((ss) => ss.filter((s) => s.isCurrent || (adminId ? s.adminId !== adminId : false)));
+      addHistory({ entityType: "Session", entityId: adminId || "all", action: "All sessions revoked", prev: {}, next: {}, reason: adminId ? "Revoked for one admin" : "Revoked for all admins" });
+      notify(adminId ? "Admin's sessions revoked" : "All sessions revoked");
+    },
+    // IP Restrictions
+    addIpRestriction: (data) => {
+      const rule = { id: "ip-" + nextId(), listType: data.listType, ip: data.ip, label: data.label, addedBy: ADMIN, addedDate: NOW, status: "Active", hitCount: 0, lastHit: null };
+      setIpRestrictions((rs) => [rule, ...rs]);
+      addHistory({ entityType: "IpRestriction", entityId: rule.id, action: "IP rule added", prev: {}, next: { ip: rule.ip, listType: rule.listType }, reason: "New rule" });
+      notify(`${rule.listType === "Allow" ? "Allowlist" : "Blocklist"} rule added`);
+      return rule;
+    },
+    toggleIpRestriction: (id) => {
+      let nextStatus = "Active";
+      setIpRestrictions((rs) => rs.map((r) => { if (r.id !== id) return r; nextStatus = r.status === "Active" ? "Disabled" : "Active"; return { ...r, status: nextStatus }; }));
+      addHistory({ entityType: "IpRestriction", entityId: id, action: "IP rule status changed", prev: {}, next: { status: nextStatus }, reason: "Manual toggle" });
+      notify(`Rule ${nextStatus === "Active" ? "enabled" : "disabled"}`);
+    },
+    removeIpRestriction: (id) => {
+      const rule = ipRestrictions.find((r) => r.id === id);
+      setIpRestrictions((rs) => rs.filter((r) => r.id !== id));
+      addHistory({ entityType: "IpRestriction", entityId: id, action: "IP rule removed", prev: { ip: rule?.ip }, next: {}, reason: "Manually removed" });
+      notify("Rule removed");
+    },
+    // Security Alerts
+    updateAlertStatus: (id, status, note) => {
+      setSecurityAlerts((al) => al.map((a) => {
+        if (a.id !== id) return a;
+        const notes = note ? [...a.notes, { text: note, by: ADMIN, at: NOW }] : a.notes;
+        const resolved = status === "Resolved" || status === "False Positive";
+        return { ...a, status, notes, resolvedAt: resolved ? NOW : a.resolvedAt, resolvedBy: resolved ? ADMIN : a.resolvedBy };
+      }));
+      addHistory({ entityType: "SecurityAlert", entityId: id, action: "Alert status changed", prev: {}, next: { status }, reason: note || "Status updated" });
+      notify(`Alert marked ${status}`);
+    },
+    assignAlert: (id, adminName) => {
+      setSecurityAlerts((al) => al.map((a) => (a.id === id ? { ...a, assignedTo: adminName } : a)));
+      addHistory({ entityType: "SecurityAlert", entityId: id, action: "Alert assigned", prev: {}, next: { assignedTo: adminName }, reason: "Manual assignment" });
+      notify(`Assigned to ${adminName}`);
+    },
+    // API Keys
+    createApiKey: (data) => {
+      const key = {
+        id: "apikey-" + nextId(), name: data.name, keyPrefix: data.environment === "Production" ? "lsk_live_" : data.environment === "Staging" ? "lsk_test_" : "lsk_dev_",
+        keyId: genKeyId(), scopes: data.scopes, createdBy: ADMIN, createdDate: NOW, lastUsed: "—",
+        expiresAt: data.expiresAt, status: "Active", requestCount30d: 0, environment: data.environment,
+      };
+      const fullValue = genApiKeyValue(data.environment);
+      setApiKeys((ks) => [key, ...ks]);
+      addHistory({ entityType: "ApiKey", entityId: key.id, action: "API key created", prev: {}, next: { name: key.name, environment: key.environment, scopes: key.scopes }, reason: "New key" });
+      notify(`API key "${key.name}" created`);
+      return { ...key, fullValue };
+    },
+    revokeApiKey: (id) => {
+      const key = apiKeys.find((k) => k.id === id);
+      setApiKeys((ks) => ks.map((k) => (k.id === id ? { ...k, status: "Revoked" } : k)));
+      addHistory({ entityType: "ApiKey", entityId: id, action: "API key revoked", prev: { status: "Active" }, next: { status: "Revoked" }, reason: "Manually revoked" });
+      notify(`Key "${key?.name}" revoked`);
+    },
+    rotateApiKey: (id) => {
+      const src = apiKeys.find((k) => k.id === id);
+      if (!src) return null;
+      setApiKeys((ks) => ks.map((k) => (k.id === id ? { ...k, status: "Revoked" } : k)));
+      const key = {
+        id: "apikey-" + nextId(), name: src.name, keyPrefix: src.keyPrefix, keyId: genKeyId(),
+        scopes: src.scopes, createdBy: ADMIN, createdDate: NOW, lastUsed: "—",
+        expiresAt: src.expiresAt, status: "Active", requestCount30d: 0, environment: src.environment,
+      };
+      const fullValue = genApiKeyValue(src.environment);
+      setApiKeys((ks) => [key, ...ks]);
+      addHistory({ entityType: "ApiKey", entityId: key.id, action: "API key rotated", prev: { sourceId: id }, next: { name: key.name }, reason: `Rotated from ${src.keyId}` });
+      notify(`Key "${key.name}" rotated`);
+      return { ...key, fullValue };
+    },
+    // MFA policy
+    updateMfaConfig: (updates) => {
+      setMfaConfig((c) => ({ ...c, ...updates }));
+      addHistory({ entityType: "MfaConfig", entityId: "global", action: "MFA policy updated", prev: {}, next: updates, reason: "Policy change" });
+      notify("MFA policy updated");
     },
   };
   return <StoreCtx.Provider value={api}>{children}</StoreCtx.Provider>;
