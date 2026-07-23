@@ -594,7 +594,7 @@ function DiffTable({ before, after }) {
     <table className="w-full text-[13px]">
       <thead><tr style={{ color: T.text3 }} className="text-[11px] uppercase tracking-wider"><th className="text-left py-1.5">Field</th><th className="text-left py-1.5">Before</th><th className="text-left py-1.5">After</th></tr></thead>
       <tbody>{keys.map((k) => (
-        <tr key={k} className="border-t" style={{ borderColor: T.border }}>
+        <tr key={k} style={{ boxShadow: `inset 0 1px 0 ${T.border}` }}>
           <td className="py-1.5 font-medium" style={{ color: T.text }}>{k}</td>
           <td className="py-1.5" style={{ color: T.danger }}>{before?.[k] != null ? String(before[k]) : "—"}</td>
           <td className="py-1.5" style={{ color: T.success }}>{after?.[k] != null ? String(after[k]) : "—"}</td>

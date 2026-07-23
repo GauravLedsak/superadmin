@@ -568,17 +568,17 @@ export function LeadsPage({ go }) {
           <CardHeader title="Lead Sources (30d)" sub="Volume & conversion — performance view, not integration health" />
           <CardBody className="p-0">
             <div className="overflow-auto">
-              <table className="w-full text-[13px] border-collapse">
+              <table className="w-full text-[13px] border-separate" style={{ borderSpacing: 0 }}>
                 <thead><tr>{["Source", "Leads", "Conv%", "Cost/Lead"].map((h) => (
-                  <th key={h} className="text-left text-[11px] font-semibold uppercase tracking-wider px-4 py-2.5 border-b" style={{ color: T.text3, borderColor: T.border, background: T.subtle }}>{h}</th>
+                  <th key={h} className="text-left text-[11px] font-semibold uppercase tracking-wider px-4 py-2.5" style={{ color: T.text3, boxShadow: `inset 0 -1px 0 ${T.border}`, background: T.subtle }}>{h}</th>
                 ))}</tr></thead>
                 <tbody>
                   {LEAD_SOURCES_DATA.map((s) => (
                     <tr key={s.source} className="hover:bg-[var(--t-subtle)] cursor-pointer" onClick={() => setTileFilter(setFilterSource, filterSource === s.source ? "All" : s.source)} style={{ background: filterSource === s.source ? T.primarySoft : undefined }}>
-                      <td className="px-4 py-2.5 border-b font-medium" style={{ borderColor: T.border, color: T.text }}>{s.source}</td>
-                      <td className="px-4 py-2.5 border-b" style={{ borderColor: T.border, color: T.text }}>{s.count.toLocaleString("en-IN")}</td>
-                      <td className="px-4 py-2.5 border-b" style={{ borderColor: T.border, color: s.convPct >= 5 ? T.success : T.text }}>{s.convPct}%</td>
-                      <td className="px-4 py-2.5 border-b" style={{ borderColor: T.border, color: T.text }}>{s.costPerLead ? `₹${s.costPerLead}` : "Free"}</td>
+                      <td className="px-4 py-2.5 font-medium" style={{ boxShadow: `inset 0 -1px 0 ${T.border}`, color: T.text }}>{s.source}</td>
+                      <td className="px-4 py-2.5" style={{ boxShadow: `inset 0 -1px 0 ${T.border}`, color: T.text }}>{s.count.toLocaleString("en-IN")}</td>
+                      <td className="px-4 py-2.5" style={{ boxShadow: `inset 0 -1px 0 ${T.border}`, color: s.convPct >= 5 ? T.success : T.text }}>{s.convPct}%</td>
+                      <td className="px-4 py-2.5" style={{ boxShadow: `inset 0 -1px 0 ${T.border}`, color: T.text }}>{s.costPerLead ? `₹${s.costPerLead}` : "Free"}</td>
                     </tr>
                   ))}
                 </tbody>
