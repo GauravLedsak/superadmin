@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from "react";
 import {
   ArrowUpRight, ArrowDownRight, ChevronDown, ChevronRight, Star, MessageSquare, Mail,
-  ArrowLeft, MoreHorizontal, X, CheckCircle2, Search,
+  ArrowLeft, MoreHorizontal, X, CheckCircle2, Search, Copy, Check,
 } from "lucide-react";
 import { T, cx } from "../theme.js";
 import { fmtLakh } from "../lib/format.js";
@@ -45,9 +45,104 @@ export function Badge({ tone = "gray", children }) {
   const map = {
     success: [T.successSoft, T.successFg], danger: [T.dangerSoft, T.dangerFg], warning: [T.warningSoft, T.warningFg],
     info: [T.primarySoft, T.accentText], purple: [T.purpleSoft, T.purpleFg], gray: [T.graySoft, T.text2], brand: [T.primarySoft, T.accentText],
+    // Critical severity (Logs & Audit) — visually louder than plain "danger" per spec: dark/bold.
+    dangerStrong: [T.dangerStrong, T.dangerStrongFg],
   };
   const [bg, fg] = map[tone] || map.gray;
   return <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium" style={{ background: bg, color: fg }}>{children}</span>;
+}
+
+// Small icon-button that copies a value to the clipboard and flashes a checkmark — used
+// throughout Logs & Audit detail drawers for IDs, correlation IDs, IPs.
+export function CopyButton({ value, label }) {
+  const [copied, setCopied] = useState(false);
+  const onCopy = (e) => {
+    e.stopPropagation();
+    navigator.clipboard?.writeText(String(value)).then(() => { setCopied(true); setTimeout(() => setCopied(false), 1400); });
+  };
+  return (
+    <button onClick={onCopy} title={`Copy ${label || "value"}`} className="inline-flex items-center gap-1 p-0.5 rounded hover:bg-[var(--t-hover)]" style={{ color: copied ? T.success : T.text3 }}>
+      {copied ? <Check size={12} /> : <Copy size={12} />}
+    </button>
+  );
+}
+
+// Collapsible, monospace pretty-printed JSON block — used for raw payloads / stack traces
+// across Logs & Audit detail drawers. `collapsedLines` controls how many lines show by
+// default before a "Show more" toggle appears.
+export function JSONBlock({ data, collapsedLines = 8 }) {
+  const [open, setOpen] = useState(false);
+  const text = typeof data === "string" ? data : JSON.stringify(data, null, 2);
+  const lines = text.split("\n");
+  const needsToggle = lines.length > collapsedLines;
+  const shown = open || !needsToggle ? text : lines.slice(0, collapsedLines).join("\n") + "\n…";
+  return (
+    <div className="rounded-lg border" style={{ borderColor: T.border, background: T.subtle }}>
+      <pre className="text-[11.5px] font-mono px-3 py-2.5 overflow-x-auto whitespace-pre-wrap" style={{ color: T.text2 }}>{shown}</pre>
+      {needsToggle && (
+        <button onClick={() => setOpen((o) => !o)} className="w-full text-center text-[11px] font-medium py-1.5 border-t hover:bg-[var(--t-hover)]" style={{ borderColor: T.border, color: T.primary }}>
+          {open ? "Show less" : `Show ${lines.length - collapsedLines} more lines`}
+        </button>
+      )}
+    </div>
+  );
+}
+
+// Checkbox dropdown for multi-select filters (e.g. Severity) — closes on outside click.
+export function MultiSelectFilter({ label, options, selected, onChange }) {
+  const [open, setOpen] = useState(false);
+  const ref = React.useRef(null);
+  useClickOutside(ref, () => setOpen(false));
+  const toggle = (opt) => onChange(selected.includes(opt) ? selected.filter((o) => o !== opt) : [...selected, opt]);
+  return (
+    <div className="relative" ref={ref}>
+      <button onClick={() => setOpen((o) => !o)} className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs border" style={{ borderColor: selected.length ? T.primary : T.border, background: selected.length ? T.primarySoft : T.surface, color: selected.length ? T.accentText : T.text }}>
+        {label}{selected.length ? ` (${selected.length})` : ""} <ChevronDown size={12} />
+      </button>
+      {open && (
+        <div className="absolute left-0 top-9 z-30 w-44 rounded-lg border bg-[var(--t-surface)] shadow-lg py-1" style={{ borderColor: T.border }}>
+          {options.map((opt) => (
+            <label key={opt} className="flex items-center gap-2 px-3 py-1.5 text-[13px] cursor-pointer hover:bg-[var(--t-subtle)]" style={{ color: T.text }}>
+              <input type="checkbox" checked={selected.includes(opt)} onChange={() => toggle(opt)} className="w-3.5 h-3.5 rounded" style={{ accentColor: T.primary }} />
+              {opt}
+            </label>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Date/time range filter with quick presets + a custom start/end fallback — shared by every
+// Logs & Audit tab. `presets` is a plain string list; "Custom" reveals two datetime inputs.
+export function DateRangeFilter({ presets, value, onChange }) {
+  const [open, setOpen] = useState(false);
+  const ref = React.useRef(null);
+  useClickOutside(ref, () => setOpen(false));
+  const isCustom = value.preset === "Custom";
+  return (
+    <div className="relative" ref={ref}>
+      <button onClick={() => setOpen((o) => !o)} className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs border" style={{ borderColor: value.preset ? T.primary : T.border, background: value.preset ? T.primarySoft : T.surface, color: value.preset ? T.accentText : T.text }}>
+        {value.preset || "Date range"} <ChevronDown size={12} />
+      </button>
+      {open && (
+        <div className="absolute left-0 top-9 z-30 w-56 rounded-lg border bg-[var(--t-surface)] shadow-lg py-1" style={{ borderColor: T.border }}>
+          {presets.map((p) => (
+            <button key={p} onClick={() => { onChange({ preset: p, start: null, end: null }); if (p !== "Custom") setOpen(false); }} className="w-full flex items-center px-3 py-1.5 text-[13px] text-left hover:bg-[var(--t-subtle)]" style={{ color: p === value.preset ? T.primary : T.text }}>{p}</button>
+          ))}
+          {isCustom && (
+            <div className="px-3 py-2 space-y-1.5 border-t" style={{ borderColor: T.border }}>
+              <input type="datetime-local" value={value.start || ""} onChange={(e) => onChange({ ...value, start: e.target.value })} className="w-full px-2 py-1 rounded border text-xs" style={{ borderColor: T.border }} />
+              <input type="datetime-local" value={value.end || ""} onChange={(e) => onChange({ ...value, end: e.target.value })} className="w-full px-2 py-1 rounded border text-xs" style={{ borderColor: T.border }} />
+            </div>
+          )}
+          {value.preset && (
+            <button onClick={() => { onChange({ preset: null, start: null, end: null }); setOpen(false); }} className="w-full flex items-center px-3 py-1.5 text-[13px] text-left border-t hover:bg-[var(--t-subtle)]" style={{ color: T.text3, borderColor: T.border }}>Clear</button>
+          )}
+        </div>
+      )}
+    </div>
+  );
 }
 
 export function Avatar({ name, tone = "brand", size = 28 }) {
@@ -158,6 +253,19 @@ export function Pagination({ page, totalPages, setPage, perPage, setPerPage, tot
   );
 }
 export const ChevronLeftIcon = ({ size = 13 }) => <ChevronRight size={size} className="rotate-180" />;
+
+// Click-to-sort column header — pass an array of these inside a Table's `head` prop wherever
+// a column should be sortable. `sort` is { key, dir }; clicking the active column flips dir,
+// clicking a new column selects it desc-first (matches "default sort by timestamp desc").
+export function SortableTh({ label, sortKey, sort, onChange }) {
+  const active = sort.key === sortKey;
+  return (
+    <button onClick={() => onChange({ key: sortKey, dir: active && sort.dir === "desc" ? "asc" : "desc" })} className="inline-flex items-center gap-0.5 hover:opacity-80">
+      {label}
+      {active && <ChevronDown size={11} className={active && sort.dir === "asc" ? "rotate-180" : ""} />}
+    </button>
+  );
+}
 
 // Closes a menu on outside click only — unlike onBlur+setTimeout, this doesn't fire while
 // interacting with elements inside the menu itself (checkboxes, drill-in navigation, drag).

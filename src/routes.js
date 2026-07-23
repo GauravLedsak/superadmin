@@ -28,7 +28,7 @@ export const NAV = [
   ] },
   { section: "Reliability", items: [
     { id: "queues", label: "Queue Monitor", icon: Layers, badge: "5", path: "/queues" },
-    { id: "logs", label: "Logs & Audit Trail", icon: ListChecks, path: "/logs" },
+    { id: "logs", label: "Logs & Audit", icon: ListChecks, path: "/logs" },
     { id: "health", label: "System Health", icon: Activity, path: "/health" },
   ] },
   { section: "Governance", items: [
