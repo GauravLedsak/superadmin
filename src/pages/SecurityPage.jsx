@@ -18,6 +18,7 @@ import {
   SESSION_STATUS_TONE, LOGIN_EVENTS, LOGIN_EVENT_TONE, LOGIN_OUTCOMES, ALERT_TYPES,
   ALERT_TYPE_LABEL, ALERT_SEVERITIES, ALERT_SEVERITY_TONE, ALERT_STATUSES, ALERT_STATUS_TONE,
   API_KEY_STATUS_TONE, API_KEY_ENVIRONMENTS, ENV_TONE, API_KEY_SCOPES, API_KEY_EXPIRY_OPTIONS,
+  WEBHOOK_MODULES, WEBHOOK_MODULE_LABEL, WEBHOOK_KEY_STATUS_TONE,
   isRepeatedFailure, isValidCidr,
 } from "../data/security.js";
 import { DATE_PRESETS, applyLogFilters, sortRows, exportLogs, LOGS_NOW } from "../data/logs.js";
@@ -39,7 +40,6 @@ const AlertSeverityBadge = ({ severity }) => <Badge tone={ALERT_SEVERITY_TONE[se
 const AlertStatusBadge = ({ status }) => <Badge tone={ALERT_STATUS_TONE[status] || "gray"}>{status}</Badge>;
 const ApiKeyStatusBadge = ({ status }) => <Badge tone={API_KEY_STATUS_TONE[status] || "gray"}>{status}</Badge>;
 const EnvBadge = ({ env }) => <Badge tone={ENV_TONE[env] || "gray"}>{env}</Badge>;
-const MfaBadge = ({ enabled }) => enabled ? <Badge tone="success">✓ Enabled</Badge> : <Badge tone="warning">⚠ Disabled</Badge>;
 
 function DetailRow({ label, children }) {
   return <div className="flex justify-between gap-4 py-1.5 border-b last:border-0" style={{ borderColor: T.border }}><span className="text-[12px]" style={{ color: T.text3 }}>{label}</span><span className="text-[13px] text-right" style={{ color: T.text }}>{children}</span></div>;
@@ -58,12 +58,12 @@ const distinct = (rows, key) => Array.from(new Set(rows.map((r) => r[key]).filte
 /* ============================================================
    1. ADMIN USERS
    ============================================================ */
-const EMPTY_ADMIN_FORM = { name: "", email: "", phone: "", roleId: "", requireMfa: false, sendInvitation: true };
+const EMPTY_ADMIN_FORM = { name: "", email: "", phone: "", roleId: "", sendInvitation: true };
 function AdminFormDrawer({ open, mode, admin, roles, onClose, onSubmit }) {
   const [form, setForm] = useState(EMPTY_ADMIN_FORM);
   const [errors, setErrors] = useState({});
   useEffect(() => {
-    if (open) setForm(mode === "edit" && admin ? { name: admin.name, email: admin.email, phone: admin.phone, roleId: admin.roleId, requireMfa: admin.mfaEnabled, sendInvitation: false } : EMPTY_ADMIN_FORM);
+    if (open) setForm(mode === "edit" && admin ? { name: admin.name, email: admin.email, phone: admin.phone, roleId: admin.roleId, sendInvitation: false } : EMPTY_ADMIN_FORM);
     setErrors({});
   }, [open, mode, admin]);
   const u = (k, v) => setForm((f) => ({ ...f, [k]: v }));
@@ -97,10 +97,9 @@ function AdminFormDrawer({ open, mode, admin, roles, onClose, onSubmit }) {
           </select>
           {errors.roleId && <div className="text-xs mt-1" style={{ color: T.danger }}>{errors.roleId}</div>}
         </Field>
-        {mode !== "edit" && <>
-          <label className="flex items-center gap-2 cursor-pointer"><input type="checkbox" checked={form.requireMfa} onChange={(e) => u("requireMfa", e.target.checked)} className="w-4 h-4 rounded" /><span className="text-[13px]">Require MFA</span></label>
+        {mode !== "edit" && (
           <label className="flex items-center gap-2 cursor-pointer"><input type="checkbox" checked={form.sendInvitation} onChange={(e) => u("sendInvitation", e.target.checked)} className="w-4 h-4 rounded" /><span className="text-[13px]">Send invitation email</span></label>
-        </>}
+        )}
       </div>
       <div className="flex justify-end gap-2 px-6 py-4 border-t" style={{ borderColor: T.border }}>
         <Button onClick={onClose}>Cancel</Button>
@@ -111,20 +110,18 @@ function AdminFormDrawer({ open, mode, admin, roles, onClose, onSubmit }) {
 }
 function AdminUsersTab({ store, adminUsers, roles, createOpen, setCreateOpen }) {
   const [search, setSearch] = useState(""); const [roleFilter, setRoleFilter] = useState("All");
-  const [mfaFilter, setMfaFilter] = useState("All"); const [statusFilter, setStatusFilter] = useState("All");
+  const [statusFilter, setStatusFilter] = useState("All");
   const [editAdmin, setEditAdmin] = useState(null);
   const filtered = useMemo(() => adminUsers.filter((a) =>
     (a.name.toLowerCase().includes(search.toLowerCase()) || a.email.toLowerCase().includes(search.toLowerCase())) &&
     (roleFilter === "All" || a.roleId === roleFilter) &&
-    (mfaFilter === "All" || (mfaFilter === "Enabled" ? a.mfaEnabled : !a.mfaEnabled)) &&
     (statusFilter === "All" || a.status === statusFilter)
-  ), [adminUsers, search, roleFilter, mfaFilter, statusFilter]);
+  ), [adminUsers, search, roleFilter, statusFilter]);
   const { pageRows, page, setPage, perPage, setPerPage, totalPages, total } = usePagination(filtered, 10);
   const menuFor = (a) => (
     <Menu items={[
       { label: "Edit Admin", icon: Pencil, onClick: () => setEditAdmin(a) },
       { label: "Reset Password", icon: Key, onClick: () => store.resetAdminPassword(a.id) },
-      { label: a.mfaEnabled ? "Disable MFA" : "Enable MFA", icon: ShieldAlert, onClick: () => store.toggleAdminMfa(a.id) },
       { divider: true },
       a.status === "Suspended"
         ? { label: "Reactivate", icon: Power, onClick: () => store.reactivateAdmin(a.id) }
@@ -137,18 +134,16 @@ function AdminUsersTab({ store, adminUsers, roles, createOpen, setCreateOpen }) 
       <div className="flex gap-2 items-center mb-3.5 flex-wrap shrink-0">
         <SearchInput value={search} onChange={setSearch} placeholder="Search name or email…" />
         <div className="relative"><select value={roleFilter} onChange={(e) => setRoleFilter(e.target.value)} className="appearance-none pl-2.5 pr-7 py-1.5 rounded-md text-xs border outline-none" style={{ borderColor: T.border, background: T.surface, color: T.text }}><option value="All">Role: All</option>{roles.map((r) => <option key={r.id} value={r.id}>{r.name}</option>)}</select><ChevronDown size={13} className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: T.text3 }} /></div>
-        <div className="relative"><select value={mfaFilter} onChange={(e) => setMfaFilter(e.target.value)} className="appearance-none pl-2.5 pr-7 py-1.5 rounded-md text-xs border outline-none" style={{ borderColor: T.border, background: T.surface, color: T.text }}><option value="All">MFA: All</option><option value="Enabled">Enabled</option><option value="Disabled">Disabled</option></select><ChevronDown size={13} className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: T.text3 }} /></div>
         <div className="relative"><select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="appearance-none pl-2.5 pr-7 py-1.5 rounded-md text-xs border outline-none" style={{ borderColor: T.border, background: T.surface, color: T.text }}><option value="All">Status: All</option>{ADMIN_STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}</select><ChevronDown size={13} className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: T.text3 }} /></div>
       </div>
       <Card className="flex-1 min-h-0 flex flex-col overflow-hidden">
         <Pagination page={page} totalPages={totalPages} setPage={setPage} perPage={perPage} setPerPage={setPerPage} total={total} />
-        <Table head={["Admin", "Email", "Role", "MFA", "Last Login", "Sessions", "Status", ""]}>
+        <Table head={["Admin", "Email", "Role", "Last Login", "Sessions", "Status", ""]}>
           {pageRows.map((a) => (
             <tr key={a.id} className="hover:bg-[#F8F9FC]">
               <Td><NameCell name={a.name} /></Td>
               <Td className="text-xs" style={{ color: T.text2 }}><div className="flex items-center gap-1">{a.email}<CopyButton value={a.email} label="email" /></div></Td>
               <Td><RoleTypeBadge type={roles.find((r) => r.id === a.roleId)?.type || "Standard"} /> <span className="text-xs ml-1" style={{ color: T.text2 }}>{a.roleName}</span></Td>
-              <Td><MfaBadge enabled={a.mfaEnabled} /></Td>
               <Td className="text-xs font-mono" style={{ color: T.text2 }}>{a.lastLogin}</Td>
               <Td className="text-xs">{a.activeSessions}</Td>
               <Td><AdminStatusBadge status={a.status} /></Td>
@@ -158,7 +153,7 @@ function AdminUsersTab({ store, adminUsers, roles, createOpen, setCreateOpen }) 
               </div></Td>
             </tr>
           ))}
-          {!filtered.length && <tr><Td colSpan={8} className="text-center py-10" style={{ color: T.text3 }}>No admins match these filters</Td></tr>}
+          {!filtered.length && <tr><Td colSpan={7} className="text-center py-10" style={{ color: T.text3 }}>No admins match these filters</Td></tr>}
         </Table>
       </Card>
       <AdminFormDrawer open={createOpen} mode="create" admin={null} roles={roles} onClose={() => setCreateOpen(false)} onSubmit={(data) => { if (store.createAdmin(data)) setCreateOpen(false); }} />
@@ -311,9 +306,9 @@ function RolesTab({ store, roles, adminUsers }) {
 /* ============================================================
    3. SESSIONS
    ============================================================ */
-function SecurityPolicyCard({ store, mfaConfig }) {
+function SecurityPolicyCard({ store, sessionPolicy }) {
   const [open, setOpen] = useState(false);
-  const u = (k, v) => store.updateMfaConfig({ [k]: v });
+  const u = (k, v) => store.updateSessionPolicy({ [k]: v });
   return (
     <Card className="mb-3.5 shrink-0">
       <button onClick={() => setOpen((o) => !o)} className="w-full flex items-center justify-between px-5 py-3.5">
@@ -322,24 +317,21 @@ function SecurityPolicyCard({ store, mfaConfig }) {
       </button>
       {open && (
         <CardBody className="pt-0 space-y-2.5 border-t" style={{ borderColor: T.border }}>
-          <div className="flex items-center justify-between py-1.5"><span className="text-[13px]" style={{ color: T.text }}>Require MFA for all admins</span><Switch on={mfaConfig.requireForAll} onClick={() => u("requireForAll", !mfaConfig.requireForAll)} /></div>
-          <div className="flex items-center justify-between py-1.5"><span className="text-[13px]" style={{ color: T.text }}>Require MFA for Privileged roles</span><Switch on={mfaConfig.requireForPrivileged} onClick={() => u("requireForPrivileged", !mfaConfig.requireForPrivileged)} /></div>
-          <div className="flex items-center justify-between py-1.5"><span className="text-[13px]" style={{ color: T.text }}>Allow MFA backup codes</span><Switch on={mfaConfig.allowBackupCodes} onClick={() => u("allowBackupCodes", !mfaConfig.allowBackupCodes)} /></div>
-          <div className="flex items-center justify-between py-1.5"><span className="text-[13px]" style={{ color: T.text }}>Max failed login attempts</span><input type="number" value={mfaConfig.maxFailedAttempts} onChange={(e) => u("maxFailedAttempts", Number(e.target.value))} className="w-20 px-2 py-1 rounded border text-xs text-right outline-none" style={{ borderColor: T.border }} /></div>
-          <div className="flex items-center justify-between py-1.5"><span className="text-[13px]" style={{ color: T.text }}>Lockout duration (minutes)</span><input type="number" value={mfaConfig.lockoutDurationMinutes} onChange={(e) => u("lockoutDurationMinutes", Number(e.target.value))} className="w-20 px-2 py-1 rounded border text-xs text-right outline-none" style={{ borderColor: T.border }} /></div>
-          <div className="flex items-center justify-between py-1.5"><span className="text-[13px]" style={{ color: T.text }}>Session timeout (minutes)</span><input type="number" value={mfaConfig.sessionTimeoutMinutes} onChange={(e) => u("sessionTimeoutMinutes", Number(e.target.value))} className="w-20 px-2 py-1 rounded border text-xs text-right outline-none" style={{ borderColor: T.border }} /></div>
+          <div className="flex items-center justify-between py-1.5"><span className="text-[13px]" style={{ color: T.text }}>Max failed login attempts</span><input type="number" value={sessionPolicy.maxFailedAttempts} onChange={(e) => u("maxFailedAttempts", Number(e.target.value))} className="w-20 px-2 py-1 rounded border text-xs text-right outline-none" style={{ borderColor: T.border }} /></div>
+          <div className="flex items-center justify-between py-1.5"><span className="text-[13px]" style={{ color: T.text }}>Lockout duration (minutes)</span><input type="number" value={sessionPolicy.lockoutDurationMinutes} onChange={(e) => u("lockoutDurationMinutes", Number(e.target.value))} className="w-20 px-2 py-1 rounded border text-xs text-right outline-none" style={{ borderColor: T.border }} /></div>
+          <div className="flex items-center justify-between py-1.5"><span className="text-[13px]" style={{ color: T.text }}>Session timeout (minutes)</span><input type="number" value={sessionPolicy.sessionTimeoutMinutes} onChange={(e) => u("sessionTimeoutMinutes", Number(e.target.value))} className="w-20 px-2 py-1 rounded border text-xs text-right outline-none" style={{ borderColor: T.border }} /></div>
         </CardBody>
       )}
     </Card>
   );
 }
-function SessionsTab({ store, sessions, mfaConfig }) {
+function SessionsTab({ store, sessions, sessionPolicy }) {
   const [revokeAllOpen, setRevokeAllOpen] = useState(false);
   return (
     <>
-      <SecurityPolicyCard store={store} mfaConfig={mfaConfig} />
+      <SecurityPolicyCard store={store} sessionPolicy={sessionPolicy} />
       <div className="flex items-center justify-between mb-3.5 shrink-0">
-        <p className="text-[13px]" style={{ color: T.text2 }}>Sessions expire after {Math.round(mfaConfig.sessionTimeoutMinutes / 60)}h of inactivity</p>
+        <p className="text-[13px]" style={{ color: T.text2 }}>Sessions expire after {Math.round(sessionPolicy.sessionTimeoutMinutes / 60)}h of inactivity</p>
         <Button variant="danger" onClick={() => setRevokeAllOpen(true)}><XCircle size={14} /> Revoke All</Button>
       </div>
       <Card className="flex-1 min-h-0 flex flex-col overflow-hidden">
@@ -495,7 +487,6 @@ function LoginHistoryTab({ loginHistory }) {
               <DetailRow label="IP"><span className="font-mono text-xs">{detail.ip}</span></DetailRow>
               <DetailRow label="Location">{detail.location}</DetailRow>
               <DetailRow label="Device">{detail.device}</DetailRow>
-              {detail.mfaMethod && <DetailRow label="MFA Method">{detail.mfaMethod}</DetailRow>}
               {detail.failReason && <DetailRow label="Fail Reason"><span style={{ color: T.danger }}>{detail.failReason}</span></DetailRow>}
             </CardBody></Card>
           </div>
@@ -717,33 +708,196 @@ function ApiKeysTab({ store, apiKeys }) {
 }
 
 /* ============================================================
+   8. WEBHOOK KEYS — per-tenant outbound webhook subscriptions
+   ============================================================ */
+const EMPTY_WHK_FORM = { tenantId: "", name: "", destinationUrl: "", modules: [], events: [] };
+function CreateWebhookKeyModal({ open, onClose, clients, onCreate }) {
+  const [step, setStep] = useState(1);
+  const [form, setForm] = useState(EMPTY_WHK_FORM);
+  const [error, setError] = useState("");
+  useEffect(() => { if (open) { setStep(1); setForm(EMPTY_WHK_FORM); setError(""); } }, [open]);
+
+  const selectedClient = clients.find((c) => c.id === form.tenantId);
+  const availableModules = WEBHOOK_MODULES.filter((m) => form.modules.includes(m.key));
+  const toggleModule = (key) => setForm((f) => {
+    const modules = f.modules.includes(key) ? f.modules.filter((m) => m !== key) : [...f.modules, key];
+    const allowedEvents = new Set(WEBHOOK_MODULES.filter((m) => modules.includes(m.key)).flatMap((m) => m.events));
+    return { ...f, modules, events: f.events.filter((e) => allowedEvents.has(e)) };
+  });
+  const toggleEvent = (ev) => setForm((f) => ({ ...f, events: f.events.includes(ev) ? f.events.filter((e) => e !== ev) : [...f.events, ev] }));
+
+  const next = () => {
+    if (step === 1 && !form.tenantId) { setError("Select a client to continue"); return; }
+    if (step === 2 && !form.modules.length) { setError("Select at least one module"); return; }
+    setError(""); setStep((s) => s + 1);
+  };
+  const back = () => { setError(""); setStep((s) => Math.max(1, s - 1)); };
+  const submit = () => {
+    if (!form.name.trim()) { setError("Name is required"); return; }
+    if (!/^https?:\/\/.+/.test(form.destinationUrl)) { setError("Enter a valid destination URL"); return; }
+    if (!form.events.length) { setError("Select at least one event"); return; }
+    onCreate({ ...form, tenantName: selectedClient.name, name: form.name.trim() });
+  };
+
+  return (
+    <Modal open={open} onClose={onClose} title={`Create Webhook Key — Step ${step} of 3`} footer={<>
+      {step > 1 && <Button onClick={back}>Back</Button>}
+      <Button onClick={onClose}>Cancel</Button>
+      {step < 3 ? <Button variant="primary" onClick={next}>Next</Button> : <Button variant="primary" onClick={submit}>Create Webhook Key</Button>}
+    </>}>
+      {step === 1 && (
+        <Field label="Client">
+          <select value={form.tenantId} onChange={(e) => setForm((f) => ({ ...f, tenantId: e.target.value ? Number(e.target.value) : "" }))} className="w-full mt-1 px-3 py-2 rounded-lg border text-[13px] outline-none" style={{ borderColor: error ? T.danger : T.border }}>
+            <option value="">Select a client</option>
+            {clients.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+          </select>
+        </Field>
+      )}
+      {step === 2 && (
+        <div>
+          <div className="text-[12px] mb-2" style={{ color: T.text3 }}>Which modules should send events to {selectedClient?.name}?</div>
+          <div className="space-y-1">
+            {WEBHOOK_MODULES.map((m) => (
+              <label key={m.key} className="flex items-center gap-2 cursor-pointer text-[13px] py-1" style={{ color: T.text }}>
+                <input type="checkbox" checked={form.modules.includes(m.key)} onChange={() => toggleModule(m.key)} className="w-3.5 h-3.5 rounded" style={{ accentColor: T.primary }} />
+                {m.label}
+              </label>
+            ))}
+          </div>
+        </div>
+      )}
+      {step === 3 && (
+        <div className="space-y-3">
+          <Field label="Webhook Name">
+            <input value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} placeholder="e.g. Lead Sync" className="w-full mt-1 px-3 py-2 rounded-lg border text-[13px] outline-none" style={{ borderColor: T.border }} />
+          </Field>
+          <Field label="Destination URL">
+            <input value={form.destinationUrl} onChange={(e) => setForm((f) => ({ ...f, destinationUrl: e.target.value }))} placeholder="https://…" className="w-full mt-1 px-3 py-2 rounded-lg border text-[13px] font-mono outline-none" style={{ borderColor: T.border }} />
+          </Field>
+          <Field label="Events (multi-select, grouped by module)">
+            <div className="mt-1 space-y-2.5 max-h-56 overflow-y-auto pr-1">
+              {availableModules.map((m) => (
+                <div key={m.key}>
+                  <div className="text-[11px] font-semibold uppercase tracking-wider mb-1" style={{ color: T.text3 }}>{m.label}</div>
+                  {m.events.map((ev) => (
+                    <label key={ev} className="flex items-center gap-2 cursor-pointer text-[13px] py-0.5" style={{ color: T.text }}>
+                      <input type="checkbox" checked={form.events.includes(ev)} onChange={() => toggleEvent(ev)} className="w-3.5 h-3.5 rounded" style={{ accentColor: T.primary }} />
+                      <span className="font-mono text-xs">{ev}</span>
+                    </label>
+                  ))}
+                </div>
+              ))}
+            </div>
+          </Field>
+        </div>
+      )}
+      {error && <div className="text-xs mt-2" style={{ color: T.danger }}>{error}</div>}
+    </Modal>
+  );
+}
+function WebhookSecretRevealModal({ data, onClose }) {
+  if (!data) return null;
+  return (
+    <Modal open={!!data} onClose={onClose} title="✓ Webhook Key Created" footer={<Button variant="primary" onClick={onClose}>Done</Button>}>
+      <div className="space-y-3">
+        <p className="text-[13px]" style={{ color: T.text2 }}>Copy this signing secret now — it won't be shown again. Use it to verify the delivery signature at {data.destinationUrl}.</p>
+        <div className="flex items-center gap-2 px-3 py-2.5 rounded-lg border font-mono text-[12px] break-all" style={{ borderColor: T.border, background: T.subtle, color: T.text }}>
+          {data.secretValue}<CopyButton value={data.secretValue} label="secret" />
+        </div>
+        <DetailRow label="Key ID"><span className="font-mono text-xs">{data.keyId}</span></DetailRow>
+        <DetailRow label="Events">{data.events.length} selected</DetailRow>
+      </div>
+    </Modal>
+  );
+}
+function WebhookKeysTab({ store, webhookKeys, clients }) {
+  const [createOpen, setCreateOpen] = useState(false); const [reveal, setReveal] = useState(null);
+  const [detail, setDetail] = useState(null);
+  return (
+    <>
+      <div className="flex justify-end mb-3.5 shrink-0"><Button variant="primary" onClick={() => setCreateOpen(true)}><Plus size={15} /> Create Webhook Key</Button></div>
+      <Card className="flex-1 min-h-0 flex flex-col overflow-hidden">
+        <Table head={["Client", "Name", "Destination", "Modules", "Events", "Status", "Last Delivery", ""]}>
+          {webhookKeys.map((k) => (
+            <tr key={k.id} onClick={() => setDetail(k)} className="cursor-pointer hover:bg-[#F8F9FC]">
+              <Td className="font-medium">{k.tenantName}</Td>
+              <Td className="text-xs" style={{ color: T.text2 }}>{k.name}</Td>
+              <Td className="text-xs max-w-[200px] truncate" style={{ color: T.text2 }}>{k.destinationUrl}</Td>
+              <Td className="text-xs">{k.modules.map((m) => <Badge key={m} tone="gray">{WEBHOOK_MODULE_LABEL[m] || m}</Badge>)}</Td>
+              <Td className="text-xs">{k.events.length} event{k.events.length === 1 ? "" : "s"}</Td>
+              <Td><Badge tone={WEBHOOK_KEY_STATUS_TONE[k.status]}>{k.status}</Badge></Td>
+              <Td className="text-xs font-mono" style={{ color: T.text3 }}>{k.lastDelivery || "—"}</Td>
+              <Td><StopClick><Menu items={[
+                { label: "View Details", icon: Key, onClick: () => setDetail(k) },
+                { label: "Regenerate Secret", icon: RefreshCw, onClick: () => { const r = store.regenerateWebhookKeySecret(k.id); if (r) setReveal(r); } },
+                { divider: true },
+                { label: "Revoke", icon: Ban, danger: true, onClick: () => store.revokeWebhookKey(k.id) },
+              ]} /></StopClick></Td>
+            </tr>
+          ))}
+          {!webhookKeys.length && <tr><Td colSpan={8} className="text-center py-10" style={{ color: T.text3 }}>No webhook keys configured yet</Td></tr>}
+        </Table>
+      </Card>
+      <CreateWebhookKeyModal open={createOpen} onClose={() => setCreateOpen(false)} clients={clients} onCreate={(data) => { const r = store.createWebhookKey(data); setCreateOpen(false); if (r) setReveal(r); }} />
+      <WebhookSecretRevealModal data={reveal} onClose={() => setReveal(null)} />
+      <Drawer open={!!detail} onClose={() => setDetail(null)} width={480}>
+        {detail && <>
+          <DrawerHead title={detail.name} sub={detail.tenantName} onClose={() => setDetail(null)} />
+          <div className="px-6 py-5 space-y-4">
+            <Card><CardBody>
+              <DetailRow label="Client">{detail.tenantName}</DetailRow>
+              <DetailRow label="Destination"><span className="text-xs">{detail.destinationUrl}</span></DetailRow>
+              <DetailRow label="Key ID"><span className="font-mono text-xs">{detail.keyId}</span></DetailRow>
+              <DetailRow label="Status"><Badge tone={WEBHOOK_KEY_STATUS_TONE[detail.status]}>{detail.status}</Badge></DetailRow>
+              <DetailRow label="Created By">{detail.createdBy}</DetailRow>
+              <DetailRow label="Created">{detail.createdDate}</DetailRow>
+              <DetailRow label="Last Delivery">{detail.lastDelivery || "—"}</DetailRow>
+              <DetailRow label="Deliveries (30d)">{detail.deliveryCount30d.toLocaleString("en-IN")}</DetailRow>
+            </CardBody></Card>
+            <Card><CardHeader title="Modules" /><CardBody className="flex flex-wrap gap-1.5">
+              {detail.modules.map((m) => <Badge key={m} tone="gray">{WEBHOOK_MODULE_LABEL[m] || m}</Badge>)}
+            </CardBody></Card>
+            <Card><CardHeader title="Subscribed Events" /><CardBody className="flex flex-wrap gap-1.5">
+              {detail.events.map((e) => <Badge key={e} tone="gray">{e}</Badge>)}
+            </CardBody></Card>
+            {detail.status === "Active" && <div className="flex gap-2">
+              <Button onClick={() => { const r = store.regenerateWebhookKeySecret(detail.id); if (r) { setReveal(r); setDetail(null); } }}><RefreshCw size={14} /> Regenerate Secret</Button>
+              <Button variant="danger" onClick={() => { store.revokeWebhookKey(detail.id); setDetail(null); }}><Ban size={14} /> Revoke</Button>
+            </div>}
+          </div>
+        </>}
+      </Drawer>
+    </>
+  );
+}
+
+/* ============================================================
    PAGE ROOT
    ============================================================ */
-const SEC_TABS = ["Admin Users", "Roles & Permissions", "Sessions", "IP Restrictions", "Login History", "Security Alerts", "API Keys"];
+const SEC_TABS = ["Admin Users", "Roles & Permissions", "Sessions", "IP Restrictions", "Login History", "Security Alerts", "API Keys", "Webhook Keys"];
 
 export function SecurityPage() {
   const store = useStore();
   const [tab, setTab] = useState("Admin Users");
   const [createAdminOpen, setCreateAdminOpen] = useState(false);
 
-  const { adminUsers, secRoles, sessions, ipRestrictions, loginHistory, securityAlerts, apiKeys, mfaConfig } = store;
+  const { adminUsers, secRoles, sessions, ipRestrictions, loginHistory, securityAlerts, apiKeys, webhookKeys, sessionPolicy, clients } = store;
 
   const active = adminUsers.filter((a) => a.status === "Active").length;
-  const withoutMfa = adminUsers.filter((a) => !a.mfaEnabled).length;
-  const mfaPct = adminUsers.length ? Math.round(((adminUsers.length - withoutMfa) / adminUsers.length) * 100) : 0;
+  const privileged = adminUsers.filter((a) => secRoles.find((r) => r.id === a.roleId)?.type === "Privileged").length;
   const activeSessions = sessions.filter((s) => s.status === "Active").length;
   const alerts7d = securityAlerts.filter((a) => LOGS_NOW.getTime() - new Date(a.timestamp.replace(" ", "T")).getTime() <= 7 * 24 * 3600_000);
   const openAlerts = securityAlerts.filter((a) => a.status === "Open").length;
 
   return (
     <div className="flex flex-col h-full min-h-0">
-      <PageHeader title="Security & Access Control" desc="RBAC, MFA, sessions, IP rules, security alerts, sensitive action approvals" actions={<>
+      <PageHeader title="Security & Access Control" desc="RBAC, sessions, IP rules, security alerts, sensitive action approvals" actions={<>
         <Button onClick={() => setTab("Roles & Permissions")}>Audit Roles</Button>
         <Button variant="primary" onClick={() => setCreateAdminOpen(true)}><Plus size={15} /> New Admin</Button>
       </>} />
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4 shrink-0">
-        <Kpi label="Admin Users" value={String(adminUsers.length)} sub={`${active} active · ${withoutMfa} without MFA`} />
-        <Kpi label="MFA Enrolled" value={`${mfaPct}%`} sub={withoutMfa ? `${withoutMfa} admin(s) still using password only` : "All admins enrolled"} trend={withoutMfa ? "warn" : "pos"} />
+        <Kpi label="Admin Users" value={String(adminUsers.length)} sub={`${active} active`} />
+        <Kpi label="Privileged Admins" value={String(privileged)} sub={`of ${adminUsers.length} total`} />
         <Kpi label="Active Sessions" value={String(activeSessions)} />
         <Kpi label="Security Alerts (7d)" value={String(alerts7d.length)} sub={`${openAlerts} open · ${securityAlerts.filter((a) => a.status === "Resolved").length} resolved`} trend={openAlerts ? "warn" : "pos"} />
       </div>
@@ -758,11 +912,12 @@ export function SecurityPage() {
       <div className="flex-1 min-h-0 flex flex-col">
         {tab === "Admin Users" && <AdminUsersTab store={store} adminUsers={adminUsers} roles={secRoles} createOpen={createAdminOpen} setCreateOpen={setCreateAdminOpen} />}
         {tab === "Roles & Permissions" && <RolesTab store={store} roles={secRoles} adminUsers={adminUsers} />}
-        {tab === "Sessions" && <SessionsTab store={store} sessions={sessions} mfaConfig={mfaConfig} />}
+        {tab === "Sessions" && <SessionsTab store={store} sessions={sessions} sessionPolicy={sessionPolicy} />}
         {tab === "IP Restrictions" && <IpRestrictionsTab store={store} ipRestrictions={ipRestrictions} />}
         {tab === "Login History" && <LoginHistoryTab loginHistory={loginHistory} />}
         {tab === "Security Alerts" && <SecurityAlertsTab store={store} alerts={securityAlerts} />}
         {tab === "API Keys" && <ApiKeysTab store={store} apiKeys={apiKeys} />}
+        {tab === "Webhook Keys" && <WebhookKeysTab store={store} webhookKeys={webhookKeys} clients={clients} />}
       </div>
     </div>
   );

@@ -120,11 +120,11 @@ export const ROLE_TYPES = ["Privileged", "Standard"];
 export const ROLE_TYPE_TONE = { Privileged: "danger", Standard: "brand" };
 export const SESSION_STATUSES = ["Active", "Idle", "Expired"];
 export const SESSION_STATUS_TONE = { Active: "success", Idle: "warning", Expired: "gray" };
-export const LOGIN_EVENTS = ["login.success", "login.failed", "mfa.challenge", "mfa.verified", "account.locked", "password.reset", "session.expired"];
-export const LOGIN_EVENT_TONE = { "login.success": "success", "login.failed": "danger", "mfa.challenge": "warning", "mfa.verified": "success", "account.locked": "dangerStrong", "password.reset": "info", "session.expired": "gray" };
+export const LOGIN_EVENTS = ["login.success", "login.failed", "account.locked", "password.reset", "session.expired"];
+export const LOGIN_EVENT_TONE = { "login.success": "success", "login.failed": "danger", "account.locked": "dangerStrong", "password.reset": "info", "session.expired": "gray" };
 export const LOGIN_OUTCOMES = ["Success", "Failed", "Blocked"];
-export const ALERT_TYPES = ["brute_force", "suspicious_login", "mfa_disabled", "role_escalation", "api_key_abuse", "session_anomaly"];
-export const ALERT_TYPE_LABEL = { brute_force: "Brute Force", suspicious_login: "Suspicious Login", mfa_disabled: "MFA Disabled", role_escalation: "Role Escalation", api_key_abuse: "API Key Abuse", session_anomaly: "Session Anomaly" };
+export const ALERT_TYPES = ["brute_force", "suspicious_login", "role_escalation", "api_key_abuse", "session_anomaly"];
+export const ALERT_TYPE_LABEL = { brute_force: "Brute Force", suspicious_login: "Suspicious Login", role_escalation: "Role Escalation", api_key_abuse: "API Key Abuse", session_anomaly: "Session Anomaly" };
 export const ALERT_SEVERITIES = ["Low", "Medium", "High", "Critical"];
 export const ALERT_SEVERITY_TONE = { Low: "gray", Medium: "warning", High: "danger", Critical: "dangerStrong" };
 export const ALERT_STATUSES = ["Open", "Investigating", "Resolved", "False Positive"];
@@ -149,12 +149,12 @@ export const API_KEY_EXPIRY_OPTIONS = ["3 months", "6 months", "1 year", "2 year
    SEED DATA
    ============================================================ */
 export const SEED_ADMIN_USERS = [
-  { id: "adm-1", name: "Saif Khan", email: "saif@ledsak.ai", phone: "+919812345678", roleId: "role-superadmin", roleName: "Super Admin", mfaEnabled: true, mfaMethod: "TOTP", mfaEnrolledDate: "2026-01-15", lastLogin: "2026-05-11 09:14", activeSessions: 2, status: "Active", createdDate: "2025-08-01", createdBy: "System" },
-  { id: "adm-2", name: "Luv Sharma", email: "luv@ledsak.ai", phone: "+919876543210", roleId: "role-saleshead", roleName: "Sales Head", mfaEnabled: true, mfaMethod: "TOTP", mfaEnrolledDate: "2026-02-01", lastLogin: "2026-05-11 10:02", activeSessions: 1, status: "Active", createdDate: "2025-09-15", createdBy: "Saif Khan" },
-  { id: "adm-3", name: "Gaurav Sagar", email: "gaurav@ledsak.ai", phone: "+917543035773", roleId: "role-pm", roleName: "Product Manager", mfaEnabled: false, mfaMethod: null, mfaEnrolledDate: null, lastLogin: "2026-05-10 18:44", activeSessions: 1, status: "Active", createdDate: "2025-10-01", createdBy: "Saif Khan" },
-  { id: "adm-4", name: "Ravi Kant", email: "ravi@ledsak.ai", phone: "+918800123456", roleId: "role-engadmin", roleName: "Engineering Admin", mfaEnabled: true, mfaMethod: "TOTP", mfaEnrolledDate: "2026-01-20", lastLogin: "2026-05-11 08:30", activeSessions: 1, status: "Active", createdDate: "2025-09-01", createdBy: "Saif Khan" },
-  { id: "adm-5", name: "Narender", email: "narender@ledsak.ai", phone: "+918447571177", roleId: "role-devops", roleName: "DevOps", mfaEnabled: true, mfaMethod: "Email", mfaEnrolledDate: "2026-03-01", lastLogin: "2026-05-11 07:55", activeSessions: 1, status: "Active", createdDate: "2025-11-01", createdBy: "Ravi Kant" },
-  { id: "adm-6", name: "Abhishek", email: "abhishek@ledsak.ai", phone: "+919988776655", roleId: "role-designer", roleName: "Designer (View-only)", mfaEnabled: false, mfaMethod: null, mfaEnrolledDate: null, lastLogin: "2026-05-09 14:10", activeSessions: 0, status: "Active", createdDate: "2026-01-15", createdBy: "Saif Khan" },
+  { id: "adm-1", name: "Saif Khan", email: "saif@ledsak.ai", phone: "+919812345678", roleId: "role-superadmin", roleName: "Super Admin", lastLogin: "2026-05-11 09:14", activeSessions: 2, status: "Active", createdDate: "2025-08-01", createdBy: "System" },
+  { id: "adm-2", name: "Luv Sharma", email: "luv@ledsak.ai", phone: "+919876543210", roleId: "role-saleshead", roleName: "Sales Head", lastLogin: "2026-05-11 10:02", activeSessions: 1, status: "Active", createdDate: "2025-09-15", createdBy: "Saif Khan" },
+  { id: "adm-3", name: "Gaurav Sagar", email: "gaurav@ledsak.ai", phone: "+917543035773", roleId: "role-pm", roleName: "Product Manager", lastLogin: "2026-05-10 18:44", activeSessions: 1, status: "Active", createdDate: "2025-10-01", createdBy: "Saif Khan" },
+  { id: "adm-4", name: "Ravi Kant", email: "ravi@ledsak.ai", phone: "+918800123456", roleId: "role-engadmin", roleName: "Engineering Admin", lastLogin: "2026-05-11 08:30", activeSessions: 1, status: "Active", createdDate: "2025-09-01", createdBy: "Saif Khan" },
+  { id: "adm-5", name: "Narender", email: "narender@ledsak.ai", phone: "+918447571177", roleId: "role-devops", roleName: "DevOps", lastLogin: "2026-05-11 07:55", activeSessions: 1, status: "Active", createdDate: "2025-11-01", createdBy: "Ravi Kant" },
+  { id: "adm-6", name: "Abhishek", email: "abhishek@ledsak.ai", phone: "+919988776655", roleId: "role-designer", roleName: "Designer (View-only)", lastLogin: "2026-05-09 14:10", activeSessions: 0, status: "Active", createdDate: "2026-01-15", createdBy: "Saif Khan" },
 ];
 
 function fullAccessPerms() {
@@ -258,35 +258,30 @@ export const SEED_SESSIONS = [
 ];
 
 export const SEED_LOGIN_HISTORY = [
-  { id: "lh-1", adminId: "adm-1", adminName: "Saif Khan", email: "saif@ledsak.ai", event: "login.success", ip: "103.21.244.9", location: "New Delhi, IN", device: "Chrome 124 · macOS", timestamp: "2026-05-13 10:42:18", outcome: "Success", failReason: null, mfaMethod: "TOTP" },
-  { id: "lh-2", adminId: "adm-1", adminName: "Saif Khan", email: "saif@ledsak.ai", event: "mfa.challenge", ip: "103.21.244.9", location: "New Delhi, IN", device: "Chrome 124 · macOS", timestamp: "2026-05-13 10:42:10", outcome: "Success", failReason: null, mfaMethod: "TOTP" },
-  { id: "lh-3", adminId: "adm-2", adminName: "Luv Sharma", email: "luv@ledsak.ai", event: "login.success", ip: "49.36.88.4", location: "Mumbai, IN", device: "Chrome 124 · Windows", timestamp: "2026-05-13 09:40:02", outcome: "Success", failReason: null, mfaMethod: "TOTP" },
-  { id: "lh-4", adminId: "adm-3", adminName: "Gaurav Sagar", email: "gaurav@ledsak.ai", event: "login.success", ip: "103.21.244.31", location: "New Delhi, IN", device: "Chrome 124 · macOS", timestamp: "2026-05-10 18:00:11", outcome: "Success", failReason: null, mfaMethod: null },
-  { id: "lh-5", adminId: null, adminName: "unknown", email: "saif@ledsak.ai", event: "login.failed", ip: "185.42.11.9", location: "São Paulo, BR", device: "curl/7.68.0", timestamp: "2026-05-11 08:39:02", outcome: "Failed", failReason: "Invalid password", mfaMethod: null },
-  { id: "lh-6", adminId: null, adminName: "unknown", email: "saif@ledsak.ai", event: "login.failed", ip: "185.42.11.9", location: "São Paulo, BR", device: "curl/7.68.0", timestamp: "2026-05-11 08:40:14", outcome: "Failed", failReason: "Invalid password", mfaMethod: null },
-  { id: "lh-7", adminId: null, adminName: "unknown", email: "saif@ledsak.ai", event: "login.failed", ip: "185.42.11.9", location: "São Paulo, BR", device: "curl/7.68.0", timestamp: "2026-05-11 08:41:30", outcome: "Failed", failReason: "Invalid password", mfaMethod: null },
-  { id: "lh-8", adminId: null, adminName: "unknown", email: "saif@ledsak.ai", event: "login.failed", ip: "185.42.11.9", location: "São Paulo, BR", device: "curl/7.68.0", timestamp: "2026-05-11 08:42:00", outcome: "Failed", failReason: "Invalid password", mfaMethod: null },
-  { id: "lh-9", adminId: null, adminName: "unknown", email: "saif@ledsak.ai", event: "account.locked", ip: "185.42.11.9", location: "São Paulo, BR", device: "curl/7.68.0", timestamp: "2026-05-11 08:42:05", outcome: "Blocked", failReason: "Account locked after 4 failed attempts", mfaMethod: null },
-  { id: "lh-10", adminId: "adm-4", adminName: "Ravi Kant", email: "ravi@ledsak.ai", event: "login.success", ip: "103.21.244.44", location: "New Delhi, IN", device: "Firefox 126 · Ubuntu", timestamp: "2026-05-13 08:00:20", outcome: "Success", failReason: null, mfaMethod: "TOTP" },
-  { id: "lh-11", adminId: "adm-5", adminName: "Narender", email: "narender@ledsak.ai", event: "mfa.verified", ip: "49.36.12.9", location: "Gurugram, IN", device: "Chrome 124 · Windows", timestamp: "2026-05-13 07:55:40", outcome: "Success", failReason: null, mfaMethod: "Email" },
-  { id: "lh-12", adminId: "adm-5", adminName: "Narender", email: "narender@ledsak.ai", event: "login.success", ip: "49.36.12.9", location: "Gurugram, IN", device: "Chrome 124 · Windows", timestamp: "2026-05-13 07:55:12", outcome: "Success", failReason: null, mfaMethod: "Email" },
-  { id: "lh-13", adminId: "adm-6", adminName: "Abhishek", email: "abhishek@ledsak.ai", event: "login.success", ip: "103.21.244.52", location: "New Delhi, IN", device: "Safari · macOS", timestamp: "2026-05-09 14:00:05", outcome: "Success", failReason: null, mfaMethod: null },
-  { id: "lh-14", adminId: "adm-3", adminName: "Gaurav Sagar", email: "gaurav@ledsak.ai", event: "password.reset", ip: "103.21.244.31", location: "New Delhi, IN", device: "Chrome 124 · macOS", timestamp: "2026-05-08 11:20:00", outcome: "Success", failReason: null, mfaMethod: null },
-  { id: "lh-15", adminId: "adm-1", adminName: "Saif Khan", email: "saif@ledsak.ai", event: "session.expired", ip: "103.21.244.15", location: "New Delhi, IN", device: "Safari · iPhone 15 Pro", timestamp: "2026-05-07 22:10:00", outcome: "Success", failReason: null, mfaMethod: null },
-  { id: "lh-16", adminId: "adm-2", adminName: "Luv Sharma", email: "luv@ledsak.ai", event: "mfa.challenge", ip: "49.36.88.4", location: "Mumbai, IN", device: "Chrome 124 · Windows", timestamp: "2026-05-13 09:39:55", outcome: "Success", failReason: null, mfaMethod: "TOTP" },
-  { id: "lh-17", adminId: null, adminName: "unknown", email: "ravi@ledsak.ai", event: "login.failed", ip: "92.12.55.3", location: "Frankfurt, DE", device: "unknown", timestamp: "2026-05-06 03:12:00", outcome: "Failed", failReason: "Invalid password", mfaMethod: null },
-  { id: "lh-18", adminId: "adm-4", adminName: "Ravi Kant", email: "ravi@ledsak.ai", event: "login.success", ip: "103.21.244.44", location: "New Delhi, IN", device: "Firefox 126 · Ubuntu", timestamp: "2026-05-06 09:00:00", outcome: "Success", failReason: null, mfaMethod: "TOTP" },
+  { id: "lh-1", adminId: "adm-1", adminName: "Saif Khan", email: "saif@ledsak.ai", event: "login.success", ip: "103.21.244.9", location: "New Delhi, IN", device: "Chrome 124 · macOS", timestamp: "2026-05-13 10:42:18", outcome: "Success", failReason: null },
+  { id: "lh-3", adminId: "adm-2", adminName: "Luv Sharma", email: "luv@ledsak.ai", event: "login.success", ip: "49.36.88.4", location: "Mumbai, IN", device: "Chrome 124 · Windows", timestamp: "2026-05-13 09:40:02", outcome: "Success", failReason: null },
+  { id: "lh-4", adminId: "adm-3", adminName: "Gaurav Sagar", email: "gaurav@ledsak.ai", event: "login.success", ip: "103.21.244.31", location: "New Delhi, IN", device: "Chrome 124 · macOS", timestamp: "2026-05-10 18:00:11", outcome: "Success", failReason: null },
+  { id: "lh-5", adminId: null, adminName: "unknown", email: "saif@ledsak.ai", event: "login.failed", ip: "185.42.11.9", location: "São Paulo, BR", device: "curl/7.68.0", timestamp: "2026-05-11 08:39:02", outcome: "Failed", failReason: "Invalid password" },
+  { id: "lh-6", adminId: null, adminName: "unknown", email: "saif@ledsak.ai", event: "login.failed", ip: "185.42.11.9", location: "São Paulo, BR", device: "curl/7.68.0", timestamp: "2026-05-11 08:40:14", outcome: "Failed", failReason: "Invalid password" },
+  { id: "lh-7", adminId: null, adminName: "unknown", email: "saif@ledsak.ai", event: "login.failed", ip: "185.42.11.9", location: "São Paulo, BR", device: "curl/7.68.0", timestamp: "2026-05-11 08:41:30", outcome: "Failed", failReason: "Invalid password" },
+  { id: "lh-8", adminId: null, adminName: "unknown", email: "saif@ledsak.ai", event: "login.failed", ip: "185.42.11.9", location: "São Paulo, BR", device: "curl/7.68.0", timestamp: "2026-05-11 08:42:00", outcome: "Failed", failReason: "Invalid password" },
+  { id: "lh-9", adminId: null, adminName: "unknown", email: "saif@ledsak.ai", event: "account.locked", ip: "185.42.11.9", location: "São Paulo, BR", device: "curl/7.68.0", timestamp: "2026-05-11 08:42:05", outcome: "Blocked", failReason: "Account locked after 4 failed attempts" },
+  { id: "lh-10", adminId: "adm-4", adminName: "Ravi Kant", email: "ravi@ledsak.ai", event: "login.success", ip: "103.21.244.44", location: "New Delhi, IN", device: "Firefox 126 · Ubuntu", timestamp: "2026-05-13 08:00:20", outcome: "Success", failReason: null },
+  { id: "lh-12", adminId: "adm-5", adminName: "Narender", email: "narender@ledsak.ai", event: "login.success", ip: "49.36.12.9", location: "Gurugram, IN", device: "Chrome 124 · Windows", timestamp: "2026-05-13 07:55:12", outcome: "Success", failReason: null },
+  { id: "lh-13", adminId: "adm-6", adminName: "Abhishek", email: "abhishek@ledsak.ai", event: "login.success", ip: "103.21.244.52", location: "New Delhi, IN", device: "Safari · macOS", timestamp: "2026-05-09 14:00:05", outcome: "Success", failReason: null },
+  { id: "lh-14", adminId: "adm-3", adminName: "Gaurav Sagar", email: "gaurav@ledsak.ai", event: "password.reset", ip: "103.21.244.31", location: "New Delhi, IN", device: "Chrome 124 · macOS", timestamp: "2026-05-08 11:20:00", outcome: "Success", failReason: null },
+  { id: "lh-15", adminId: "adm-1", adminName: "Saif Khan", email: "saif@ledsak.ai", event: "session.expired", ip: "103.21.244.15", location: "New Delhi, IN", device: "Safari · iPhone 15 Pro", timestamp: "2026-05-07 22:10:00", outcome: "Success", failReason: null },
+  { id: "lh-17", adminId: null, adminName: "unknown", email: "ravi@ledsak.ai", event: "login.failed", ip: "92.12.55.3", location: "Frankfurt, DE", device: "unknown", timestamp: "2026-05-06 03:12:00", outcome: "Failed", failReason: "Invalid password" },
+  { id: "lh-18", adminId: "adm-4", adminName: "Ravi Kant", email: "ravi@ledsak.ai", event: "login.success", ip: "103.21.244.44", location: "New Delhi, IN", device: "Firefox 126 · Ubuntu", timestamp: "2026-05-06 09:00:00", outcome: "Success", failReason: null },
 ];
 
 export const SEED_SECURITY_ALERTS = [
   { id: "alert-1", type: "brute_force", title: "Brute-force attempt detected", description: "4 failed login attempts from 185.42.11.9 in 3 minutes targeting saif@ledsak.ai, followed by an automatic account lock.", severity: "High", sourceIp: "185.42.11.9", targetAdmin: "Saif Khan", timestamp: "2026-05-11 08:42:00", status: "False Positive", assignedTo: "Saif Khan", notes: [{ text: "Automated scanner, blocked at WAF", by: "Saif Khan", at: "2026-05-11 09:00" }], resolvedAt: "2026-05-11 09:00:00", resolvedBy: "Saif Khan" },
   { id: "alert-2", type: "suspicious_login", title: "Login from new location", description: "ravi@ledsak.ai login attempt failed from an unrecognized location (Frankfurt, DE) never seen for this account.", severity: "Medium", sourceIp: "92.12.55.3", targetAdmin: "Ravi Kant", timestamp: "2026-05-06 03:12:00", status: "Resolved", assignedTo: "Ravi Kant", notes: [{ text: "Confirmed not Ravi — VPN test from a contractor, access already revoked", by: "Ravi Kant", at: "2026-05-06 10:00" }], resolvedAt: "2026-05-06 10:00:00", resolvedBy: "Ravi Kant" },
-  { id: "alert-3", type: "mfa_disabled", title: "MFA disabled on standard-access account", description: "gaurav@ledsak.ai does not have MFA enabled, and the account has Product Manager-level access to plan and settings mutation.", severity: "Medium", sourceIp: null, targetAdmin: "Gaurav Sagar", timestamp: "2026-05-10 09:00:00", status: "Open", assignedTo: null, notes: [], resolvedAt: null, resolvedBy: null },
-  { id: "alert-4", type: "mfa_disabled", title: "MFA disabled on view-only account", description: "abhishek@ledsak.ai does not have MFA enabled. Access is view-only so risk is low, but flagged per policy.", severity: "Low", sourceIp: null, targetAdmin: "Abhishek", timestamp: "2026-05-09 14:15:00", status: "Investigating", assignedTo: "Saif Khan", notes: [{ text: "Reached out to Abhishek to enroll MFA this week", by: "Saif Khan", at: "2026-05-10 11:00" }], resolvedAt: null, resolvedBy: null },
-  { id: "alert-5", type: "role_escalation", title: "Role changed to Privileged tier", description: "Ravi Kant's role was changed from Standard (DevOps) to Privileged (Engineering Admin) by Saif Khan.", severity: "Medium", sourceIp: "103.21.244.9", targetAdmin: "Ravi Kant", timestamp: "2026-05-01 10:00:00", status: "Resolved", assignedTo: "Saif Khan", notes: [{ text: "Approved — Ravi now owns Integrations & API Keys", by: "Saif Khan", at: "2026-05-01 10:05" }], resolvedAt: "2026-05-01 10:05:00", resolvedBy: "Saif Khan" },
-  { id: "alert-6", type: "api_key_abuse", title: "Unusual request volume on API key", description: "Key 'Mobile SDK — Production' logged a 4x spike in request volume over a 1-hour window compared to its 7-day baseline.", severity: "High", sourceIp: null, targetAdmin: null, timestamp: "2026-05-12 22:10:00", status: "Investigating", assignedTo: "Ravi Kant", notes: [{ text: "Checking with mobile team — likely a retry-storm bug on their end, not abuse", by: "Ravi Kant", at: "2026-05-13 08:00" }], resolvedAt: null, resolvedBy: null },
-  { id: "alert-7", type: "session_anomaly", title: "Session active from two distant locations", description: "Saif Khan has concurrent active sessions from New Delhi and a second device — both recognized devices, flagged for review only as routine hygiene.", severity: "Low", sourceIp: "103.21.244.15", targetAdmin: "Saif Khan", timestamp: "2026-05-12 18:31:00", status: "False Positive", assignedTo: "Saif Khan", notes: [{ text: "Both sessions are mine — desktop + personal iPhone", by: "Saif Khan", at: "2026-05-12 19:00" }], resolvedAt: "2026-05-12 19:00:00", resolvedBy: "Saif Khan" },
-  { id: "alert-8", type: "suspicious_login", title: "Repeated login failures, low volume", description: "2 failed login attempts for luv@ledsak.ai from a recognized IP range — below brute-force threshold but outside typical login hours.", severity: "Low", sourceIp: "49.36.88.4", targetAdmin: "Luv Sharma", timestamp: "2026-05-13 06:10:00", status: "Open", assignedTo: null, notes: [], resolvedAt: null, resolvedBy: null },
+  { id: "alert-3", type: "role_escalation", title: "Role changed to Privileged tier", description: "Ravi Kant's role was changed from Standard (DevOps) to Privileged (Engineering Admin) by Saif Khan.", severity: "Medium", sourceIp: "103.21.244.9", targetAdmin: "Ravi Kant", timestamp: "2026-05-01 10:00:00", status: "Resolved", assignedTo: "Saif Khan", notes: [{ text: "Approved — Ravi now owns Integrations & API Keys", by: "Saif Khan", at: "2026-05-01 10:05" }], resolvedAt: "2026-05-01 10:05:00", resolvedBy: "Saif Khan" },
+  { id: "alert-4", type: "api_key_abuse", title: "Unusual request volume on API key", description: "Key 'Mobile SDK — Production' logged a 4x spike in request volume over a 1-hour window compared to its 7-day baseline.", severity: "High", sourceIp: null, targetAdmin: null, timestamp: "2026-05-12 22:10:00", status: "Investigating", assignedTo: "Ravi Kant", notes: [{ text: "Checking with mobile team — likely a retry-storm bug on their end, not abuse", by: "Ravi Kant", at: "2026-05-13 08:00" }], resolvedAt: null, resolvedBy: null },
+  { id: "alert-5", type: "session_anomaly", title: "Session active from two distant locations", description: "Saif Khan has concurrent active sessions from New Delhi and a second device — both recognized devices, flagged for review only as routine hygiene.", severity: "Low", sourceIp: "103.21.244.15", targetAdmin: "Saif Khan", timestamp: "2026-05-12 18:31:00", status: "False Positive", assignedTo: "Saif Khan", notes: [{ text: "Both sessions are mine — desktop + personal iPhone", by: "Saif Khan", at: "2026-05-12 19:00" }], resolvedAt: "2026-05-12 19:00:00", resolvedBy: "Saif Khan" },
+  { id: "alert-6", type: "suspicious_login", title: "Repeated login failures, low volume", description: "2 failed login attempts for luv@ledsak.ai from a recognized IP range — below brute-force threshold but outside typical login hours.", severity: "Low", sourceIp: "49.36.88.4", targetAdmin: "Luv Sharma", timestamp: "2026-05-13 06:10:00", status: "Open", assignedTo: null, notes: [], resolvedAt: null, resolvedBy: null },
 ];
 
 export const SEED_IP_RESTRICTIONS = [
@@ -306,15 +301,37 @@ export const SEED_API_KEYS = [
   { id: "apikey-5", name: "Old Dashboard Key", keyPrefix: "lsk_live_", keyId: "key_00c1aa", scopes: ["tenants.read", "tenants.write"], createdBy: "Saif Khan", createdDate: "2025-09-01", lastUsed: "2026-01-14 12:00", expiresAt: "2026-09-01", status: "Revoked", requestCount30d: 0, environment: "Production" },
 ];
 
-export const SEED_MFA_CONFIG = {
-  requireForAll: false,
-  requireForPrivileged: true,
-  allowBackupCodes: true,
+export const SEED_SESSION_POLICY = {
   maxFailedAttempts: 5,
   lockoutDurationMinutes: 30,
   sessionTimeoutMinutes: 720,
-  allowedMethods: ["TOTP", "Email"],
 };
+
+/* ---- Webhook Keys — per-tenant outbound webhook subscriptions ----
+   Distinct from API Keys (inbound, platform-wide REST access): a Webhook Key is scoped to
+   one client/tenant and pushes selected module events to that tenant's own endpoint. Module
+   list intentionally mirrors the event namespaces already seeded in data/logs.js's Webhook
+   Logs tab (lead.*, payment.*, subscription.*, user.*) so a key created here and a delivery
+   logged there describe the same event vocabulary. */
+export const WEBHOOK_MODULES = [
+  { key: "leads", label: "Leads", events: ["lead.created", "lead.assigned", "lead.updated", "lead.converted", "lead.lost"] },
+  { key: "users", label: "Users", events: ["user.created", "user.suspended", "user.reactivated"] },
+  { key: "subscriptions", label: "Subscriptions", events: ["subscription.created", "subscription.renewed", "subscription.cancelled"] },
+  { key: "payments", label: "Payments", events: ["payment.success", "payment.failed", "invoice.retried"] },
+  { key: "onboarding", label: "Onboarding", events: ["onboarding.started", "onboarding.stage_changed", "onboarding.completed"] },
+  { key: "automation", label: "Automation", events: ["automation.triggered"] },
+];
+export const WEBHOOK_MODULE_LABEL = Object.fromEntries(WEBHOOK_MODULES.map((m) => [m.key, m.label]));
+export const WEBHOOK_KEY_STATUSES = ["Active", "Disabled", "Revoked"];
+export const WEBHOOK_KEY_STATUS_TONE = { Active: "success", Disabled: "warning", Revoked: "danger" };
+
+export const SEED_WEBHOOK_KEYS = [
+  { id: "whk-1", tenantId: 6, tenantName: "Varun Group", name: "Varun Group — Lead Sync", destinationUrl: "https://crm.varungroup.in/hooks", modules: ["leads"], events: ["lead.created", "lead.assigned"], keyId: "whk_7f2a19", status: "Active", createdBy: "Ravi Kant", createdDate: "2026-02-01", lastDelivery: "2026-05-13 10:42", deliveryCount30d: 842 },
+  { id: "whk-2", tenantId: 3, tenantName: "MedLinks", name: "MedLinks — Billing Events", destinationUrl: "https://billing.medlinks.in/wh", modules: ["payments", "subscriptions"], events: ["payment.failed", "payment.success", "subscription.renewed"], keyId: "whk_3c81de", status: "Active", createdBy: "Ravi Kant", createdDate: "2026-01-20", lastDelivery: "2026-05-13 10:38", deliveryCount30d: 214 },
+  { id: "whk-3", tenantId: 12, tenantName: "Aryaanya Group", name: "Aryaanya — Subscription Sync", destinationUrl: "https://hooks.aryaanya.com/lsk", modules: ["subscriptions"], events: ["subscription.renewed", "subscription.cancelled"], keyId: "whk_9a10c2", status: "Active", createdBy: "Narender", createdDate: "2026-03-05", lastDelivery: "2026-05-13 10:35", deliveryCount30d: 96 },
+  { id: "whk-4", tenantId: 2, tenantName: "Derma Purtitys", name: "Derma Purtitys — Lead + User Events", destinationUrl: "https://derma-purtitys.example.com/webhooks/ledsak", modules: ["leads", "users"], events: ["lead.created", "lead.converted", "user.created"], keyId: "whk_11beef", status: "Disabled", createdBy: "Saif Khan", createdDate: "2026-02-14", lastDelivery: "2026-04-30 09:12", deliveryCount30d: 0 },
+  { id: "whk-5", tenantId: 11, tenantName: "Urban Autohub", name: "Urban Autohub — Old Integration", destinationUrl: "https://legacy.urbanauto.in/hooks", modules: ["leads"], events: ["lead.created"], keyId: "whk_00dead", status: "Revoked", createdBy: "Ravi Kant", createdDate: "2025-11-10", lastDelivery: "2026-03-01 14:00", deliveryCount30d: 0 },
+];
 
 /* ---- Helpers ---- */
 export function isRepeatedFailure(row, allRows) {
@@ -329,6 +346,12 @@ export function genApiKeyValue(environment) {
 }
 export function genKeyId() {
   return "key_" + Array.from({ length: 6 }, () => Math.floor(Math.random() * 16).toString(16)).join("");
+}
+export function genWebhookKeyId() {
+  return "whk_" + Array.from({ length: 6 }, () => Math.floor(Math.random() * 16).toString(16)).join("");
+}
+export function genWebhookSecret() {
+  return "whsec_" + Array.from({ length: 32 }, () => Math.floor(Math.random() * 16).toString(16)).join("");
 }
 export function isValidCidr(value) {
   const v = (value || "").trim();

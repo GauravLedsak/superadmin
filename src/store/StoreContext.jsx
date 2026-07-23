@@ -9,8 +9,8 @@ import {
 } from "../data/seed.js";
 import {
   SEED_ADMIN_USERS, SEED_ROLES, SEED_SESSIONS, SEED_IP_RESTRICTIONS,
-  SEED_LOGIN_HISTORY, SEED_SECURITY_ALERTS, SEED_API_KEYS, SEED_MFA_CONFIG,
-  emptyPermissions, genApiKeyValue, genKeyId,
+  SEED_LOGIN_HISTORY, SEED_SECURITY_ALERTS, SEED_API_KEYS, SEED_SESSION_POLICY, SEED_WEBHOOK_KEYS,
+  emptyPermissions, genApiKeyValue, genKeyId, genWebhookKeyId, genWebhookSecret,
 } from "../data/security.js";
 
 export const buildTasksFromPlaybook = (tenant, playbook) => playbook.steps.map((step) => {
@@ -68,7 +68,8 @@ export function StoreProvider({ children }) {
   const [loginHistory] = useState(SEED_LOGIN_HISTORY);
   const [securityAlerts, setSecurityAlerts] = useState(SEED_SECURITY_ALERTS);
   const [apiKeys, setApiKeys] = useState(SEED_API_KEYS);
-  const [mfaConfig, setMfaConfig] = useState(SEED_MFA_CONFIG);
+  const [webhookKeys, setWebhookKeys] = useState(SEED_WEBHOOK_KEYS);
+  const [sessionPolicy, setSessionPolicy] = useState(SEED_SESSION_POLICY);
 
   const notify = (msg) => { setToast(msg); setTimeout(() => setToast(null), 2600); };
   const addHistory = (entry) => setHistory((h) => [{ id: nextId(), changedDate: NOW, changedBy: ADMIN, ...entry }, ...h]);
@@ -77,7 +78,7 @@ export function StoreProvider({ children }) {
     clients, invoices, users, tickets, onboarding, notifs, toast, impersonating,
     spPlans, addonPricing, subscriptions, history, notify,
     spPlaybooks, tenantTasks, contactLogs,
-    adminUsers, secRoles, sessions, ipRestrictions, loginHistory, securityAlerts, apiKeys, mfaConfig,
+    adminUsers, secRoles, sessions, ipRestrictions, loginHistory, securityAlerts, apiKeys, webhookKeys, sessionPolicy,
     // Original store methods
     setTenantStatus: (id, status) => {
       const prevStatus = clients.find((c) => c.id === id)?.status;
@@ -318,8 +319,7 @@ export function StoreProvider({ children }) {
       const role = secRoles.find((r) => r.id === data.roleId);
       const admin = {
         id: "adm-" + nextId(), name: data.name, email: data.email, phone: data.phone || "",
-        roleId: data.roleId, roleName: role ? role.name : "", mfaEnabled: !!data.requireMfa, mfaMethod: data.requireMfa ? "TOTP" : null,
-        mfaEnrolledDate: data.requireMfa ? NOW : null, lastLogin: "—", activeSessions: 0,
+        roleId: data.roleId, roleName: role ? role.name : "", lastLogin: "—", activeSessions: 0,
         status: data.sendInvitation ? "Invited" : "Active", createdDate: NOW, createdBy: ADMIN,
       };
       setAdminUsers((as) => [admin, ...as]);
@@ -352,16 +352,6 @@ export function StoreProvider({ children }) {
       setAdminUsers((as) => as.map((a) => (a.id === id ? { ...a, status: "Deactivated" } : a)));
       addHistory({ entityType: "AdminUser", entityId: id, action: "Admin deactivated", prev: {}, next: { status: "Deactivated" }, reason: "Manually deactivated" });
       notify("Admin deactivated");
-    },
-    toggleAdminMfa: (id) => {
-      let nextEnabled = false;
-      setAdminUsers((as) => as.map((a) => {
-        if (a.id !== id) return a;
-        nextEnabled = !a.mfaEnabled;
-        return { ...a, mfaEnabled: nextEnabled, mfaMethod: nextEnabled ? (a.mfaMethod || "TOTP") : null, mfaEnrolledDate: nextEnabled ? NOW : null };
-      }));
-      addHistory({ entityType: "AdminUser", entityId: id, action: nextEnabled ? "MFA enabled" : "MFA disabled", prev: { mfaEnabled: !nextEnabled }, next: { mfaEnabled: nextEnabled }, reason: "Manual toggle" });
-      notify(`MFA ${nextEnabled ? "enabled" : "disabled"}`);
     },
     resetAdminPassword: (id) => {
       const admin = adminUsers.find((a) => a.id === id);
@@ -483,11 +473,47 @@ export function StoreProvider({ children }) {
       notify(`Key "${key.name}" rotated`);
       return { ...key, fullValue };
     },
-    // MFA policy
-    updateMfaConfig: (updates) => {
-      setMfaConfig((c) => ({ ...c, ...updates }));
-      addHistory({ entityType: "MfaConfig", entityId: "global", action: "MFA policy updated", prev: {}, next: updates, reason: "Policy change" });
-      notify("MFA policy updated");
+    // Webhook Keys — per-tenant outbound webhook subscriptions (module/event selection)
+    createWebhookKey: (data) => {
+      const key = {
+        id: "whk-" + nextId(), tenantId: data.tenantId, tenantName: data.tenantName, name: data.name,
+        destinationUrl: data.destinationUrl, modules: data.modules, events: data.events,
+        keyId: genWebhookKeyId(), status: "Active", createdBy: ADMIN, createdDate: NOW,
+        lastDelivery: null, deliveryCount30d: 0,
+      };
+      const secretValue = genWebhookSecret();
+      setWebhookKeys((ks) => [key, ...ks]);
+      addHistory({ entityType: "WebhookKey", entityId: key.id, action: "Webhook key created", prev: {}, next: { tenant: key.tenantName, modules: key.modules, events: key.events }, reason: "New webhook key" });
+      notify(`Webhook key created for ${key.tenantName}`);
+      return { ...key, secretValue };
+    },
+    updateWebhookKeyConfig: (id, updates, reason = "Webhook key updated") => {
+      let prev = {};
+      setWebhookKeys((ks) => ks.map((k) => { if (k.id !== id) return k; prev = { modules: k.modules, events: k.events, destinationUrl: k.destinationUrl }; return { ...k, ...updates }; }));
+      addHistory({ entityType: "WebhookKey", entityId: id, action: "Webhook key updated", prev, next: updates, reason });
+      notify("Webhook key updated");
+    },
+    revokeWebhookKey: (id) => {
+      const key = webhookKeys.find((k) => k.id === id);
+      setWebhookKeys((ks) => ks.map((k) => (k.id === id ? { ...k, status: "Revoked" } : k)));
+      addHistory({ entityType: "WebhookKey", entityId: id, action: "Webhook key revoked", prev: { status: key?.status }, next: { status: "Revoked" }, reason: "Manually revoked" });
+      notify(`Webhook key "${key?.name}" revoked`);
+    },
+    regenerateWebhookKeySecret: (id) => {
+      const key = webhookKeys.find((k) => k.id === id);
+      if (!key) return null;
+      const keyId = genWebhookKeyId();
+      setWebhookKeys((ks) => ks.map((k) => (k.id === id ? { ...k, keyId } : k)));
+      const secretValue = genWebhookSecret();
+      addHistory({ entityType: "WebhookKey", entityId: id, action: "Webhook secret regenerated", prev: { keyId: key.keyId }, next: { keyId }, reason: "Manual regeneration" });
+      notify(`Secret regenerated for "${key.name}"`);
+      return { ...key, keyId, secretValue };
+    },
+    // Session policy (max failed attempts, lockout, session timeout)
+    updateSessionPolicy: (updates) => {
+      setSessionPolicy((c) => ({ ...c, ...updates }));
+      addHistory({ entityType: "SessionPolicy", entityId: "global", action: "Session policy updated", prev: {}, next: updates, reason: "Policy change" });
+      notify("Session policy updated");
     },
   };
   return <StoreCtx.Provider value={api}>{children}</StoreCtx.Provider>;
