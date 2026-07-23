@@ -456,7 +456,7 @@ function SecurityLogsTab({ rows, annotations, onOpen }) {
           {pageRows.map((l) => (
             <tr key={l.id} onClick={() => onOpen("security", l.id)} className="cursor-pointer hover:brightness-[.98]" style={securityRowStyle(l)}>
               <Td className="font-mono text-xs" style={{ color: T.text2 }}>{fmtLogTime(l.timestamp)}</Td>
-              <Td className="font-mono text-xs flex items-center gap-1.5">{l.eventType === "ip.blocked" && <ShieldAlert size={13} style={{ color: T.danger }} />}{l.eventType}{!!annotations[l.id]?.length && <Flag size={11} style={{ color: T.warning }} />}</Td>
+              <Td className="font-mono text-xs"><div className="flex items-center gap-1.5">{l.eventType === "ip.blocked" && <ShieldAlert size={13} style={{ color: T.danger }} />}{l.eventType}{!!annotations[l.id]?.length && <Flag size={11} style={{ color: T.warning }} />}</div></Td>
               <Td className="text-xs" style={{ color: T.text2 }}>{l.actor || "—"}</Td>
               <Td className="font-mono text-xs" style={{ color: T.text3 }}>{l.sourceIp}</Td>
               <Td className="text-xs" style={{ color: T.text2 }}>{l.geolocation || "—"}</Td>
@@ -537,7 +537,7 @@ function ErrorLogsTab({ rows, onOpen }) {
               <tr onClick={() => onOpen("error", l.id)} className="cursor-pointer hover:bg-[#F8F9FC]" style={l.resolutionStatus === "Resolved" ? { opacity: 0.55 } : undefined}>
                 <Td><button onClick={(e) => { e.stopPropagation(); toggleExpand(l.id); }} className="p-0.5">{expanded.has(l.id) ? <ChevronDown size={13} /> : <ChevronRight size={13} />}</button></Td>
                 <Td className="font-mono text-xs" style={{ color: T.text2 }}>{fmtLogTime(l.lastSeen)}</Td>
-                <Td className="flex items-center gap-1.5"><LevelBadge level={l.level} />{l.resolutionStatus === "New" && l.level === "Critical" && <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: T.danger }} />}</Td>
+                <Td><div className="flex items-center gap-1.5"><LevelBadge level={l.level} />{l.resolutionStatus === "New" && l.level === "Critical" && <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: T.danger }} />}</div></Td>
                 <Td className="font-mono text-xs">{l.errorType}</Td>
                 <Td className="font-mono text-xs" style={{ color: T.text3 }}>{l.errorCode || "—"}</Td>
                 <Td className="max-w-[260px] truncate">{l.message}</Td>
@@ -641,7 +641,7 @@ function AdminAuditTab({ rows, annotationsFor, onOpen, onExport }) {
               <Td className="font-mono text-xs" style={{ color: T.text2 }}>{fmtLogTime(l.timestamp)}</Td>
               <Td className="font-medium">{l.actor}</Td>
               <Td className="text-xs" style={{ color: T.text2 }}>{l.actorRole}</Td>
-              <Td className="font-mono text-xs flex items-center gap-1.5">{l.action}{SENSITIVE_ADMIN_ACTIONS.has(l.action) && <Badge tone="dangerStrong">Sensitive</Badge>}{!!annotationsFor(l.id).length && <Flag size={11} style={{ color: T.warning }} />}</Td>
+              <Td className="font-mono text-xs"><div className="flex items-center gap-1.5">{l.action}{SENSITIVE_ADMIN_ACTIONS.has(l.action) && <Badge tone="dangerStrong">Sensitive</Badge>}{!!annotationsFor(l.id).length && <Flag size={11} style={{ color: T.warning }} />}</div></Td>
               <Td className="text-xs max-w-[200px] truncate" style={{ color: T.text2 }}>{l.target}</Td>
               <Td><Badge tone="gray">{ACTION_CATEGORY_OF[l.action]}</Badge></Td>
               <Td className="font-mono text-xs" style={{ color: T.text3 }}>{l.sourceIp}</Td>
