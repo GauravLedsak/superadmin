@@ -1,8 +1,8 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useRef } from "react";
 import {
   Mail, MessageSquare, Phone, CheckCircle2, XCircle, X, LogIn, Power, Ban, UserPlus,
   Clock, TriangleAlert, RefreshCw, Key, PhoneCall, Flag, GitBranch, ArrowRight,
-  AlertTriangle, Eye, Download, Plus, ChevronDown,
+  AlertTriangle, Eye, Download, Plus, ChevronDown, ChevronRight, ExternalLink,
 } from "lucide-react";
 import { T, cx } from "../theme.js";
 import { fmtINR, parseDate, isTaskOverdue } from "../lib/format.js";
@@ -20,6 +20,128 @@ import {
   TaskNoteModal,
 } from "./CustomerSuccessPage.jsx";
 import { loadAutomationLogs, SEED_AUTOMATION_LOGS, OPS_TRIGGER_LABEL, opsStatusTone } from "./AutomationPage.jsx";
+import { LOGS_NOW } from "../data/logs.js";
+import { computeTenantCrmSnapshot, fmtTenantCrmWhen, TENANT_CRM_TRIGGER_LABEL } from "../data/tenantCrmAutomations.js";
+
+/* ============================================================
+   CRM AUTOMATIONS (per-tenant, last 7d) — the tenant's own lead-routing/
+   WhatsApp/field automations, distinct from the "Automations" tab above
+   (which is Internal Ops — LEDSAK's own automations, not the tenant's).
+   Row expansion is a plain inline toggle, not a shared drawer: the only
+   existing "Run Details" UI (AutomationRunDrawer in AutomationPage.jsx) is
+   hard-wired to Internal Ops' run shape (OPS_TRIGGER_LABEL, email/in-app
+   actions to AM/Tenant) and isn't generic — see the doc's Open questions
+   for generalizing it rather than duplicating that coupling here.
+   ============================================================ */
+function CrmCountTile({ label, value, tone, onClick, sub }) {
+  const clickable = typeof onClick === "function";
+  return (
+    <div onClick={onClick} role={clickable ? "button" : undefined} tabIndex={clickable ? 0 : undefined}
+      className={cx("rounded-xl border p-3.5", clickable && "cursor-pointer hover:-translate-y-0.5 transition-transform")}
+      style={{ background: T.surface, borderColor: T.border, boxShadow: "0 1px 3px rgba(26,31,54,.06)" }}>
+      <div className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: T.text3 }}>{label}</div>
+      <div className="text-[20px] leading-none font-bold mt-1.5" style={{ color: tone || T.text }}>{value}</div>
+      {sub && <div className="text-[11px] mt-1" style={{ color: T.text2 }}>{sub}</div>}
+    </div>
+  );
+}
+// Automation names don't link anywhere yet — deep-linking into a tenant's own LEDSAK
+// instance (their Automation/Flow Automations builder) is a separate integration this admin
+// app doesn't have. Shown with a muted external-link glyph + tooltip rather than either
+// faking a working link or hiding the intended affordance entirely.
+function CrmAutomationName({ name }) {
+  return (
+    <span className="inline-flex items-center gap-1" title="Opens this automation's builder in the tenant's own LEDSAK instance — deep link not available yet" style={{ color: T.text }}>
+      {name}<ExternalLink size={11} style={{ color: T.text3 }} />
+    </span>
+  );
+}
+function TenantCrmAutomationsPanel({ tenantName }) {
+  const [statusFilter, setStatusFilter] = useState("All");
+  const [automationFilter, setAutomationFilter] = useState("All");
+  const [expandedId, setExpandedId] = useState(null);
+  const tableRef = useRef(null);
+
+  const { configuredCount, runs7d, failed7d, needsAttention } = useMemo(
+    () => computeTenantCrmSnapshot(tenantName, LOGS_NOW.getTime()),
+    [tenantName]
+  );
+  const automationNames = ["All", ...Array.from(new Set(runs7d.map((r) => r.automationName)))];
+  const filtered = runs7d.filter((r) =>
+    (statusFilter === "All" || r.status === statusFilter) &&
+    (automationFilter === "All" || r.automationName === automationFilter)
+  );
+
+  const applyAndScroll = (status) => {
+    setStatusFilter(status);
+    setAutomationFilter("All");
+    tableRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="rounded-lg border px-3.5 py-2.5 flex items-start gap-2" style={{ borderColor: T.border, background: T.subtle }}>
+        <AlertTriangle size={13} style={{ color: T.text3 }} className="shrink-0 mt-0.5" />
+        <p className="text-[12px]" style={{ color: T.text2 }}>This tenant's own CRM automations (lead routing, WhatsApp sends, field updates) — a separate system from Internal Ops, above. Scoped to the last 7 days; manual (non-automated) operations aren't included.</p>
+      </div>
+      <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
+        <CrmCountTile label="Automations Configured" value={String(configuredCount)} />
+        <CrmCountTile label="Runs (7d)" value={String(runs7d.length)} onClick={runs7d.length ? () => applyAndScroll("All") : undefined} />
+        <CrmCountTile label="Failed (7d)" value={String(failed7d.length)} tone={failed7d.length ? T.danger : undefined} onClick={failed7d.length ? () => applyAndScroll("Failed") : undefined} />
+      </div>
+      {needsAttention && (
+        <button onClick={() => applyAndScroll("Failed")} className="w-full flex items-center gap-2 rounded-lg border px-3.5 py-2.5 text-left" style={{ borderColor: T.dangerBorder, background: T.dangerSoft }}>
+          <TriangleAlert size={14} style={{ color: T.dangerFg }} />
+          <span className="text-[13px] font-medium" style={{ color: T.dangerFg }}>Needs attention — a CRM automation failed in the last 48h</span>
+        </button>
+      )}
+      <Card>
+        <div ref={tableRef} />
+        <CardHeader title={`Last 7 Days (${runs7d.length} run${runs7d.length === 1 ? "" : "s"})`} />
+        <div className="px-5 py-3 border-b flex flex-wrap gap-2 items-center" style={{ borderColor: T.border }}>
+          <div className="relative">
+            <select value={automationFilter} onChange={(e) => setAutomationFilter(e.target.value)} className="appearance-none pl-2.5 pr-6 py-1.5 rounded-lg border text-[12px] outline-none" style={{ borderColor: automationFilter !== "All" ? T.primary : T.border, background: automationFilter !== "All" ? T.primarySoft : T.surface, color: T.text }}>
+              {automationNames.map((n) => <option key={n} value={n}>{n === "All" ? "All Automations" : n}</option>)}
+            </select>
+            <ChevronDown size={11} className="absolute right-1.5 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: T.text3 }} />
+          </div>
+          <div className="relative">
+            <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="appearance-none pl-2.5 pr-6 py-1.5 rounded-lg border text-[12px] outline-none" style={{ borderColor: statusFilter !== "All" ? T.primary : T.border, background: statusFilter !== "All" ? T.primarySoft : T.surface, color: T.text }}>
+              {["All", "Success", "Partial", "Failed"].map((s) => <option key={s} value={s}>{s === "All" ? "All Statuses" : s}</option>)}
+            </select>
+            <ChevronDown size={11} className="absolute right-1.5 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: T.text3 }} />
+          </div>
+          <span className="text-[12px] ml-auto" style={{ color: T.text3 }}>{filtered.length} of {runs7d.length} runs</span>
+        </div>
+        <Table head={["", "Automation", "Trigger", "Run Time", "Status"]}>
+          {filtered.length === 0 ? (
+            <tr><td colSpan={5} className="text-center py-10 text-[13px]" style={{ color: T.text3 }}>{runs7d.length === 0 ? "No CRM automation runs in the last 7 days." : "No runs match the current filters."}</td></tr>
+          ) : filtered.map((r) => (
+            <React.Fragment key={r.id}>
+              <tr onClick={() => setExpandedId(expandedId === r.id ? null : r.id)} className="cursor-pointer hover:bg-[#F8F9FC]">
+                <Td><button onClick={(e) => { e.stopPropagation(); setExpandedId(expandedId === r.id ? null : r.id); }} className="p-0.5 rounded hover:bg-[var(--t-hover)]">{expandedId === r.id ? <ChevronDown size={13} /> : <ChevronRight size={13} />}</button></Td>
+                <Td className="font-medium"><CrmAutomationName name={r.automationName} /></Td>
+                <Td className="text-xs" style={{ color: T.text2 }}>{TENANT_CRM_TRIGGER_LABEL[r.triggerType] || r.triggerType}</Td>
+                <Td className="text-xs font-mono" style={{ color: T.text2 }}>{fmtTenantCrmWhen(r.when)}</Td>
+                <Td><Badge tone={opsStatusTone[r.status]}>{r.status}</Badge></Td>
+              </tr>
+              {expandedId === r.id && (
+                <tr><Td colSpan={5} style={{ background: T.subtle }}>
+                  <div className="py-1.5 space-y-1 text-[12px]" style={{ color: T.text2 }}>
+                    <div><span style={{ color: T.text3 }}>Run ID:</span> <span className="font-mono">{r.id}</span></div>
+                    <div><span style={{ color: T.text3 }}>Trigger type:</span> <span className="font-mono">{r.triggerType}</span></div>
+                    {r.failReason && <div style={{ color: T.danger }}>{r.status === "Failed" ? "Failure" : "Note"} reason: {r.failReason}</div>}
+                    {!r.failReason && r.status === "Success" && <div>Completed successfully.</div>}
+                  </div>
+                </Td></tr>
+              )}
+            </React.Fragment>
+          ))}
+        </Table>
+      </Card>
+    </div>
+  );
+}
 
 export function Tenant360({ tenant, onClose, starred, onToggleStar, go }) {
   const store = useStore();
@@ -86,7 +208,7 @@ export function Tenant360({ tenant, onClose, starred, onToggleStar, go }) {
           <Button size="sm" onClick={() => setSeatModal(true)}><UserPlus size={13} /> Add seats</Button>
           {c.status === "Trial" && <Button size="sm" onClick={() => store.extendTrial(c.id, 14)}><Clock size={13} /> Extend trial</Button>}
         </div>
-        <div className="px-6"><Tabs tabs={["Overview", "Users", "Billing", "Activity", "Tasks", "Automations"]} value={tab} onChange={setTab} /></div>
+        <div className="px-6"><Tabs tabs={["Overview", "Users", "Billing", "Activity", "Tasks", "Automations", "CRM Automations"]} value={tab} onChange={setTab} /></div>
       </div>
 
       <div className="px-6 py-5">
@@ -220,7 +342,7 @@ export function Tenant360({ tenant, onClose, starred, onToggleStar, go }) {
             <div className="space-y-4">
               <div className="rounded-lg border px-3.5 py-2.5 flex items-start gap-2" style={{ borderColor: T.border, background: T.subtle }}>
                 <AlertTriangle size={13} style={{ color: T.text3 }} className="shrink-0 mt-0.5" />
-                <p className="text-[12px]" style={{ color: T.text2 }}>Internal Ops automation runs only (health/renewal/payment/onboarding/status). LEDSAK's tenant-facing CRM automation system runs on a separate product with no shared pipeline into this admin app.</p>
+                <p className="text-[12px]" style={{ color: T.text2 }}>Internal Ops automation runs only (health/renewal/payment/onboarding/status) — LEDSAK's own automations, not the tenant's. For this tenant's own CRM automations (lead routing, WhatsApp, field updates), see the <strong>CRM Automations</strong> tab.</p>
               </div>
               <div className="grid grid-cols-3 gap-3">
                 <Kpi label="Success" value={String(counts.Success)} trend="pos" />
@@ -244,6 +366,7 @@ export function Tenant360({ tenant, onClose, starred, onToggleStar, go }) {
             </div>
           );
         })()}
+        {tab === "CRM Automations" && <TenantCrmAutomationsPanel tenantName={c.name} />}
       </div>
 
       <AssignPlaybookModal tenant={assignPlaybookOpen ? c : null} onClose={() => setAssignPlaybookOpen(false)} />
