@@ -12,6 +12,7 @@ import {
   SEED_LOGIN_HISTORY, SEED_SECURITY_ALERTS, SEED_API_KEYS, SEED_SESSION_POLICY, SEED_WEBHOOK_KEYS,
   emptyPermissions, genApiKeyValue, genKeyId, genWebhookKeyId, genWebhookSecret,
 } from "../data/security.js";
+import { SEED_INDUSTRIES } from "../data/industries.js";
 
 export const buildTasksFromPlaybook = (tenant, playbook) => playbook.steps.map((step) => {
   const due = new Date(TODAY);
@@ -70,6 +71,10 @@ export function StoreProvider({ children }) {
   const [apiKeys, setApiKeys] = useState(SEED_API_KEYS);
   const [webhookKeys, setWebhookKeys] = useState(SEED_WEBHOOK_KEYS);
   const [sessionPolicy, setSessionPolicy] = useState(SEED_SESSION_POLICY);
+  // Industries & Templates — CRM configuration factory (lead fields/sources/groups/stages
+  // applied at tenant onboarding). ClientsPage's Add Tenant modal derives its industry
+  // dropdown from this list (Active only) instead of a hardcoded array.
+  const [industries, setIndustries] = useState(SEED_INDUSTRIES);
 
   const notify = (msg) => { setToast(msg); setTimeout(() => setToast(null), 2600); };
   const addHistory = (entry) => setHistory((h) => [{ id: nextId(), changedDate: NOW, changedBy: ADMIN, ...entry }, ...h]);
@@ -79,6 +84,7 @@ export function StoreProvider({ children }) {
     spPlans, addonPricing, subscriptions, history, notify,
     spPlaybooks, tenantTasks, contactLogs,
     adminUsers, secRoles, sessions, ipRestrictions, loginHistory, securityAlerts, apiKeys, webhookKeys, sessionPolicy,
+    industries,
     // Original store methods
     setTenantStatus: (id, status) => {
       const prevStatus = clients.find((c) => c.id === id)?.status;
@@ -538,6 +544,50 @@ export function StoreProvider({ children }) {
     rollbackDeploy: (id, version) => {
       addHistory({ entityType: "Deployment", entityId: id, action: "Deployment rolled back", prev: { status: "Success" }, next: { status: "Rolled Back" }, reason: `Manual rollback of ${version}` });
       notify(`${version} rolled back`);
+    },
+    // === INDUSTRIES & TEMPLATES ===
+    createIndustry: (data) => {
+      const ind = { ...data, id: "ind-" + Date.now().toString(36), lastModified: NOW, modifiedBy: ADMIN };
+      setIndustries((prev) => [...prev, ind]);
+      addHistory({ entityType: "Industry", entityId: ind.id, action: "Industry created", prev: {}, next: { name: ind.name }, reason: "New industry template" });
+      notify(`Industry "${ind.name}" created`);
+      return ind;
+    },
+    updateIndustry: (id, updates, reason = "Configuration updated") => {
+      let prevName = "";
+      setIndustries((prev) => prev.map((ind) => {
+        if (ind.id !== id) return ind;
+        prevName = ind.name;
+        return { ...ind, ...updates, lastModified: NOW, modifiedBy: ADMIN };
+      }));
+      addHistory({ entityType: "Industry", entityId: id, action: "Industry updated", prev: { name: prevName }, next: { name: updates.name || prevName }, reason });
+      notify("Industry template updated");
+    },
+    duplicateIndustry: (id) => {
+      let dup = null;
+      setIndustries((prev) => {
+        const src = prev.find((ind) => ind.id === id);
+        if (!src) return prev;
+        dup = { ...JSON.parse(JSON.stringify(src)), id: "ind-" + Date.now().toString(36), name: src.name + " (Copy)", status: "Draft", isDefault: false, lastModified: NOW, modifiedBy: ADMIN };
+        return [...prev, dup];
+      });
+      if (dup) { addHistory({ entityType: "Industry", entityId: dup.id, action: "Industry duplicated", prev: { sourceId: id }, next: { name: dup.name }, reason: "Duplicated" }); notify(`Duplicated as "${dup.name}"`); }
+      return dup;
+    },
+    deleteIndustry: (id) => {
+      const ind = industries.find((i) => i.id === id);
+      const tenantCount = ind ? clients.filter((c) => c.industry === ind.name).length : 0;
+      if (tenantCount > 0) { notify(`Cannot delete — ${tenantCount} tenant${tenantCount === 1 ? "" : "s"} use this template`); return false; }
+      setIndustries((prev) => prev.filter((i) => i.id !== id));
+      addHistory({ entityType: "Industry", entityId: id, action: "Industry deleted", prev: { name: ind?.name }, next: {}, reason: "Deleted" });
+      notify("Industry template deleted");
+      return true;
+    },
+    setDefaultIndustry: (id) => {
+      setIndustries((prev) => prev.map((i) => ({ ...i, isDefault: i.id === id })));
+      const ind = industries.find((i) => i.id === id);
+      addHistory({ entityType: "Industry", entityId: id, action: "Default industry changed", prev: {}, next: { name: ind?.name }, reason: "Set as default for new tenants" });
+      notify(`"${ind?.name}" set as default`);
     },
   };
   return <StoreCtx.Provider value={api}>{children}</StoreCtx.Provider>;

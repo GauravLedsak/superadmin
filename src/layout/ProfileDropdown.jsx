@@ -1,9 +1,9 @@
 import { useState } from "react";
-import { ChevronDown, UserCog, LogOut } from "lucide-react";
+import { ChevronDown, UserCog, LogOut, Sun, Moon } from "lucide-react";
 import { T } from "../theme.js";
 import { useStore } from "../store/StoreContext.jsx";
 
-export function ProfileDropdown({ onGo }) {
+export function ProfileDropdown({ onGo, theme, onToggleTheme }) {
   const store = useStore();
   const [open, setOpen] = useState(false);
   return (
@@ -21,6 +21,9 @@ export function ProfileDropdown({ onGo }) {
             <div className="text-[11px]" style={{ color: T.text2 }}>Founder · Super Admin</div>
           </div>
           <button onMouseDown={() => { onGo("settings"); setOpen(false); }} className="w-full flex items-center gap-2.5 px-4 py-2 text-[13px] text-left hover:bg-[var(--t-subtle)]" style={{ color: T.text }}><UserCog size={14} /> Profile & Settings</button>
+          <button onMouseDown={() => { onToggleTheme(); setOpen(false); }} className="w-full flex items-center gap-2.5 px-4 py-2 text-[13px] text-left hover:bg-[var(--t-subtle)]" style={{ color: T.text }}>
+            {theme === "dark" ? <Sun size={14} /> : <Moon size={14} />} {theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+          </button>
           <button onMouseDown={() => store.notify("Logged out")} className="w-full flex items-center gap-2.5 px-4 py-2 text-[13px] text-left hover:bg-[var(--t-subtle)]" style={{ color: T.danger }}><LogOut size={14} /> Log Out</button>
         </div>
       )}

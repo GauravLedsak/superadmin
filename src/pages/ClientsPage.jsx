@@ -389,7 +389,6 @@ export function Tenant360({ tenant, onClose, starred, onToggleStar, go }) {
 /* ============================================================
    ADD TENANT — modal form for provisioning a new client
    ============================================================ */
-const TENANT_INDUSTRIES = ["Ecommerce", "Clinic", "Automotive", "Education", "Other"];
 const TENANT_AMS = ["Saif Sir", "Luv", "Vishal"];
 const TENANT_PROVIDERS = ["CarWale", "CarDekho", "Website", "WhatsApp", "Website + WhatsApp"];
 const EMPTY_TENANT_FORM = { name: "", industry: "Ecommerce", branch: "", plan: "", am: "Saif Sir", provider: "Website", seats: 5, mrr: 5000, gst: "", isTrial: false };
@@ -402,6 +401,7 @@ export function AddTenantModal({ open, onClose, onCreated }) {
   const [errors, setErrors] = useState({});
   const u = (k, v) => setForm((f) => ({ ...f, [k]: v }));
 
+  const TENANT_INDUSTRIES = store.industries.filter((i) => i.status === "Active").map((i) => i.name);
   const publishedPlans = (store.spPlans || []).filter((p) => p.planType === "Published" && p.status === "Active");
   const chosenPlan = publishedPlans.find((p) => String(p.id) === String(selectedPlanId));
 

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { PanelLeft, PanelLeftClose, RefreshCw, RotateCcw, Bell, Sun, Moon } from "lucide-react";
+import { PanelLeft, PanelLeftClose, RefreshCw, RotateCcw, Bell } from "lucide-react";
 import { T } from "../theme.js";
 import { ONBOARD_STORAGE_KEY } from "../data/seed.js";
 import { LEADS_STORAGE_KEY, LEADS_AUDIT_KEY, PII_GRANTS_KEY } from "../data/leads.js";
@@ -50,16 +50,13 @@ export function Topbar({ onGo, active, collapsed, onToggleCollapse, theme, onTog
             <span className="absolute top-0.5 w-4 h-4 rounded-full transition-all" style={{ background: checkedOut ? T.primary : "#fff", left: checkedOut ? 18 : 2 }} />
           </button>
         </label>
-        <button onClick={onToggleTheme} title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"} className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0" style={{ background: "rgba(255,255,255,.12)", color: "#fff" }}>
-          {theme === "dark" ? <Sun size={17} /> : <Moon size={17} />}
-        </button>
         <div className="relative">
           <button onClick={() => setNotifOpen((o) => !o)} onBlur={() => setTimeout(() => setNotifOpen(false), 200)} className="relative w-9 h-9 rounded-lg flex items-center justify-center" style={{ background: "rgba(255,255,255,.12)", color: "#fff" }}>
             <Bell size={17} />{unread > 0 && <span className="absolute top-1 right-1 min-w-[15px] h-[15px] px-1 rounded-full text-[9px] font-bold text-white flex items-center justify-center" style={{ background: T.danger }}>{unread}</span>}
           </button>
           <NotifPanel open={notifOpen} onClose={() => setNotifOpen(false)} onGo={onGo} />
         </div>
-        <ProfileDropdown onGo={onGo} />
+        <ProfileDropdown onGo={onGo} theme={theme} onToggleTheme={onToggleTheme} />
       </div>
     </div>
   );
