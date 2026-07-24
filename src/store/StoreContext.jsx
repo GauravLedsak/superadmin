@@ -515,6 +515,30 @@ export function StoreProvider({ children }) {
       addHistory({ entityType: "SessionPolicy", entityId: "global", action: "Session policy updated", prev: {}, next: updates, reason: "Policy change" });
       notify("Session policy updated");
     },
+    // === SYSTEM HEALTH ===
+    // Service/incident/deployment/dependency state lives locally in HealthPage (see
+    // QueuesPage's pattern) — these are thin audit+notify wrappers for the admin actions
+    // worth logging, called alongside HealthPage's own setState.
+    createIncident: (data) => {
+      addHistory({ entityType: "Incident", entityId: data.id, action: "Incident created", prev: {}, next: { title: data.title, severity: data.severity }, reason: data.title });
+      notify(`Incident created: ${data.title}`);
+    },
+    resolveIncident: (id, title) => {
+      addHistory({ entityType: "Incident", entityId: id, action: "Incident resolved", prev: { status: "Active" }, next: { status: "Resolved" }, reason: "Manually resolved" });
+      notify(`Incident resolved: ${title}`);
+    },
+    escalateIncident: (id, title, oldSeverity, newSeverity) => {
+      addHistory({ entityType: "Incident", entityId: id, action: "Incident escalated", prev: { severity: oldSeverity }, next: { severity: newSeverity }, reason: `Escalated from ${oldSeverity} to ${newSeverity}` });
+      notify(`Incident escalated to ${newSeverity}`);
+    },
+    changeIncidentOwner: (id, title, oldOwner, newOwner) => {
+      addHistory({ entityType: "Incident", entityId: id, action: "Incident owner changed", prev: { owner: oldOwner }, next: { owner: newOwner }, reason: `Reassigned from ${oldOwner} to ${newOwner}` });
+      notify(`"${title}" reassigned to ${newOwner}`);
+    },
+    rollbackDeploy: (id, version) => {
+      addHistory({ entityType: "Deployment", entityId: id, action: "Deployment rolled back", prev: { status: "Success" }, next: { status: "Rolled Back" }, reason: `Manual rollback of ${version}` });
+      notify(`${version} rolled back`);
+    },
   };
   return <StoreCtx.Provider value={api}>{children}</StoreCtx.Provider>;
 }

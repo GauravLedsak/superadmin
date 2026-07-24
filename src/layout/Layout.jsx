@@ -70,7 +70,7 @@ export function Layout() {
             <Route path="/reports" element={<ReportsPage />} />
             <Route path="/queues" element={<QueuesPage />} />
             <Route path="/logs" element={<LogsPage />} />
-            <Route path="/health" element={<HealthPage />} />
+            <Route path="/health" element={<HealthPage go={go} />} />
             <Route path="/security" element={<SecurityPage />} />
             <Route path="/support" element={<SupportPage />} />
             <Route path="/industries" element={<IndustriesPage />} />

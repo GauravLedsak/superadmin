@@ -47,4 +47,4 @@ export const PAGE_TITLES = Object.fromEntries(ALL_NAV_ITEMS.map((it) => [it.id, 
 
 // Pages whose table manages its own internal scroll and fills the available height —
 // these get a non-scrolling content area so only the table (not the whole page) scrolls.
-export const FIXED_HEIGHT_PAGES = new Set(["clients", "users", "subs", "cs", "support", "logs", "security"]);
+export const FIXED_HEIGHT_PAGES = new Set(["clients", "users", "subs", "cs", "support", "logs", "security", "health"]);
