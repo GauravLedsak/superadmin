@@ -1,19 +1,39 @@
-## Documentation rule
+## Documentation rule (always active)
 
-Docs live in /docs and are the spec of record.
+Every code change that affects user-facing behavior MUST include a
+matching doc update in the SAME commit. No exceptions, no batching.
 
-After ANY change to a route, flow, permission rule, automation trigger,
-or settings field:
-1. Update the matching /docs/features/ file IN THE SAME TURN as the code
-   change. Never batch doc updates to end of session.
-2. Append one line to /docs/CHANGELOG.md: what behavior changed and why.
-3. If a decision was made between options, record the rejected option and
-   reason in the feature doc's Decisions section.
+### What triggers a doc update
+- Any route added, removed, or renamed
+- Any flow change (new step, removed step, reordered steps)
+- Any filter, column, tab, modal, or action added/removed/changed
+- Any permission or role logic changed
+- Any automation trigger or rule changed
+- Any settings field added/removed/changed
+- Any business rule or threshold changed
+- Any bug fix that changes visible behavior
 
-Document behavior, not implementation. Flows, rules, state transitions,
-permissions, rationale — not component trees or prop lists.
+### How to update
+1. Edit the matching file in /docs/features/<feature>.md
+2. Update the [Implemented] / [Mock] / [Planned] marker if status changed
+3. Append one line to /docs/CHANGELOG.md:
+   `YYYY-MM-DD · <feature> · <what changed and why>`
+4. If a decision was made between options, add it to the Decisions section
+   with the rejected alternative and reasoning
 
-Mark every feature: [Implemented] / [Mock] / [Planned].
-Never upgrade a marker without verifying against code.
-If unsure whether something is implemented or mocked, write [Unverified]
-and flag it. Never guess.
+### What to document
+- Behavior, not implementation (what the user sees and can do)
+- Flows: step-by-step primary path + edge cases
+- Every visible element: tabs, columns, filters, buttons, modals, actions
+- Business rules, thresholds, validation
+- Permission gates (who sees what, who can do what)
+- Automation triggers and their effects
+- Mock vs implemented status for each section
+
+### What NOT to document
+- Component names, prop types, CSS classes
+- Internal function signatures
+- Import paths or file structure (except the Source line in the header)
+
+### If unsure
+Mark it [Unverified] and add to Open Questions. Never guess.
