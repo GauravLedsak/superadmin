@@ -12,6 +12,11 @@ import {
   Modal, Button, Card, CardHeader, CardBody, Badge, Table, Td, Menu, Tabs, PageHeader,
   Drawer, usePagination, Pagination, Switch,
 } from "../components/ui.jsx";
+import { LOGS_NOW } from "../data/logs.js";
+import {
+  KPI_PERIODS, CURRENT_PERIOD, TENANT_CRM_MONTHLY, TENANT_CRM_CONFIGURED_COUNT,
+  computeInternalOpsMonthly, combineMonthly, computeTenantsNeedingAttention, monthLabelOfWhen,
+} from "../data/automationKpis.js";
 
 export const OPS_TRIGGER_TYPES = [
   { id: "health_below", label: "Tenant health score crosses a threshold" },
@@ -442,23 +447,29 @@ export function AutomationRunDrawer({ run, open, onClose }) {
 
 /* ---- Automation Logs — Failed/Partial surfaced first, same lesson as Queue Monitor and
    Lead & Record Mgmt: don't bury the runs that need attention in a table of healthy ones. ---- */
-export function AutomationLogsSection({ openTenant, initialTenantFilter }) {
+export function AutomationLogsSection({ openTenant, initialTenantFilter, initialStatusFilter, initialPeriod }) {
   const store = useStore();
   const [logs] = useState(() => loadAutomationLogs() || SEED_AUTOMATION_LOGS);
-  const [view, setView] = useState("attention"); // "attention" | "all"
+  // A preset status/period (arriving from a KPI click above) means we're looking for a
+  // specific slice, not just what needs review — "Needs review" would hide Success rows and
+  // make a "Success rate" drill-through land on an empty table.
+  const [view, setView] = useState(initialStatusFilter || initialPeriod ? "all" : "attention");
   const [filterAutomation, setFilterAutomation] = useState("All");
   const [filterTenant, setFilterTenant] = useState(initialTenantFilter || "All");
-  const [filterStatus, setFilterStatus] = useState("All");
+  const [filterStatus, setFilterStatus] = useState(initialStatusFilter || "All");
+  const [filterPeriod, setFilterPeriod] = useState(initialPeriod || "All time");
   const [selectedRun, setSelectedRun] = useState(null);
 
   const automationTitles = ["All", ...Array.from(new Set(logs.map((l) => l.automationTitle)))];
   const tenantNames = ["All", ...Array.from(new Set(logs.map((l) => l.tenantName)))];
+  const periodOptions = ["All time", ...KPI_PERIODS];
 
   const filtered = logs.filter((l) => {
     if (view === "attention" && l.overallStatus === "Success") return false;
     if (filterAutomation !== "All" && l.automationTitle !== filterAutomation) return false;
     if (filterTenant !== "All" && l.tenantName !== filterTenant) return false;
     if (filterStatus !== "All" && l.overallStatus !== filterStatus) return false;
+    if (filterPeriod !== "All time" && monthLabelOfWhen(l.when) !== filterPeriod) return false;
     return true;
   });
   const { pageRows, page, setPage, perPage, setPerPage, totalPages, total } = usePagination(filtered, 10);
@@ -477,7 +488,7 @@ export function AutomationLogsSection({ openTenant, initialTenantFilter }) {
       <div className="mx-5 mt-4 rounded-lg border px-3.5 py-2.5 flex items-start gap-2" style={{ borderColor: T.border, background: T.subtle }}>
         <AlertTriangle size={14} style={{ color: T.text3 }} className="shrink-0 mt-0.5" />
         <p className="text-[12px]" style={{ color: T.text2 }}>
-          This covers <strong>Internal Ops automations only</strong> (health/renewal/payment/onboarding/status). LEDSAK's tenant-facing CRM automation system (lead routing, WhatsApp sends, pipeline updates) runs on a separate product with no shared pipeline or API into this admin app — its run history isn't available here. That's a backend/data-access gap to scope separately, not something this view can wire in.
+          This table covers <strong>Internal Ops run history only</strong> (health/renewal/payment/onboarding/status) — the only source with real per-run rows. LEDSAK's tenant-facing CRM automation system (lead routing, WhatsApp sends, pipeline updates) runs on a separate product with no shared pipeline or API into this admin app, so its individual runs can't be listed here; the KPI panel above folds its aggregate monthly totals into the combined numbers, but only Internal Ops runs are ever listed row-by-row.
         </p>
       </div>
       <Tabs tabs={["Needs review", "All runs"]} value={view === "attention" ? "Needs review" : "All runs"} onChange={(v) => { setView(v === "Needs review" ? "attention" : "all"); setPage(1); }} />
@@ -486,9 +497,10 @@ export function AutomationLogsSection({ openTenant, initialTenantFilter }) {
           { label: "Automation", value: filterAutomation, set: setFilterAutomation, opts: automationTitles },
           { label: "Tenant", value: filterTenant, set: setFilterTenant, opts: tenantNames },
           { label: "Status", value: filterStatus, set: setFilterStatus, opts: ["All", "Success", "Partial", "Failed"] },
+          { label: "Period", value: filterPeriod, set: setFilterPeriod, opts: periodOptions },
         ].map(({ label, value, set, opts }) => (
           <div key={label} className="relative">
-            <select value={value} onChange={(e) => { set(e.target.value); setPage(1); }} className="appearance-none pl-2.5 pr-6 py-1.5 rounded-lg border text-[12px] outline-none" style={{ borderColor: value !== "All" ? T.primary : T.border, background: value !== "All" ? T.primarySoft : T.surface, color: T.text }}>
+            <select value={value} onChange={(e) => { set(e.target.value); setPage(1); }} className="appearance-none pl-2.5 pr-6 py-1.5 rounded-lg border text-[12px] outline-none" style={{ borderColor: value !== "All" && value !== "All time" ? T.primary : T.border, background: value !== "All" && value !== "All time" ? T.primarySoft : T.surface, color: T.text }}>
               {opts.map((o) => <option key={o} value={o}>{o === "All" ? `All ${label === "Status" ? "Statuses" : label + "s"}` : o}</option>)}
             </select>
             <ChevronDown size={11} className="absolute right-1.5 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: T.text3 }} />
@@ -518,16 +530,79 @@ export function AutomationLogsSection({ openTenant, initialTenantFilter }) {
   );
 }
 
+/* ---- Global Automation KPIs — combines Internal Ops (real run logs) + Tenant-CRM
+   (mocked aggregate, no run-level access — see data/automationKpis.js) into one set of
+   totals. Sits above the tab bar so it's visible regardless of which tab is active; this is
+   the "expansion" of the old static "Every trigger evaluation and action attempt" line. ---- */
+function Sparkline({ values, tone }) {
+  const max = Math.max(...values, 1);
+  return (
+    <div className="flex items-end gap-1 h-7">
+      {values.map((v, i) => {
+        const pct = Math.max(0.1, v / max);
+        const isLast = i === values.length - 1;
+        return <div key={i} title={String(Math.round(v * 10) / 10)} className="flex-1 rounded-sm" style={{ height: `${pct * 100}%`, background: tone, opacity: isLast ? 1 : 0.3 + pct * 0.35 }} />;
+      })}
+    </div>
+  );
+}
+function KpiTile({ label, value, sub, sparkValues, sparkTone, onClick }) {
+  return (
+    <div onClick={onClick} className={cx("rounded-xl border p-4 text-left", onClick && "cursor-pointer hover:-translate-y-0.5 transition-transform")}
+      style={{ background: T.surface, borderColor: T.border, boxShadow: "0 2px 8px rgba(26,31,54,.07)" }}>
+      <div className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: T.text3 }}>{label}</div>
+      <div className="text-[22px] leading-none font-bold mt-2 tracking-tight" style={{ color: T.text }}>{value}</div>
+      {sub && <div className="text-[11px] mt-1.5" style={{ color: T.text2 }}>{sub}</div>}
+      {sparkValues && <div className="mt-3"><Sparkline values={sparkValues} tone={sparkTone || T.primary} /></div>}
+    </div>
+  );
+}
+function GlobalAutomationKpis({ onDrill, onNeedsAttention }) {
+  const logs = loadAutomationLogs() || SEED_AUTOMATION_LOGS;
+  const automations = loadOpsAutomations() || SEED_OPS_AUTOMATIONS;
+
+  const internalMonthly = computeInternalOpsMonthly(logs);
+  const combined = combineMonthly(internalMonthly, TENANT_CRM_MONTHLY);
+  const current = combined[combined.length - 1]; // May 2026, MTD
+  const prevFull = combined[combined.length - 2]; // Apr 2026, full month — the "this period" reference for KPIs 2-4
+
+  const totalConfigured = automations.length + TENANT_CRM_CONFIGURED_COUNT;
+  const successRate = (row) => (row.totalRuns ? Math.round((row.successRuns / row.totalRuns) * 100) : 0);
+  const failRate = (row) => 100 - successRate(row);
+
+  const needsAttention = computeTenantsNeedingAttention(logs, LOGS_NOW.getTime());
+
+  const runsSpark = combined.map((r) => r.totalRuns);
+  const successSpark = combined.map(successRate);
+  const failSpark = combined.map(failRate);
+
+  return (
+    <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3 mb-4">
+      <KpiTile label="Automations Configured" value={String(totalConfigured)} sub={`${automations.length} internal ops · ${TENANT_CRM_CONFIGURED_COUNT} tenant CRM`} />
+      <KpiTile label={`Total Runs — ${CURRENT_PERIOD}`} value={current.totalRuns.toLocaleString("en-IN")} sub={`vs ${prevFull.totalRuns.toLocaleString("en-IN")} in ${prevFull.month}`} sparkValues={runsSpark} sparkTone={T.primary} onClick={() => onDrill({ status: "All", period: CURRENT_PERIOD })} />
+      <KpiTile label={`Success Rate — ${CURRENT_PERIOD}`} value={`${successRate(current)}%`} sub="Did not fail" sparkValues={successSpark} sparkTone={T.success} onClick={() => onDrill({ status: "Success", period: CURRENT_PERIOD })} />
+      <KpiTile label={`Failure Rate — ${CURRENT_PERIOD}`} value={`${failRate(current)}%`} sub="Failed outright" sparkValues={failSpark} sparkTone={T.danger} onClick={() => onDrill({ status: "Failed", period: CURRENT_PERIOD })} />
+      <KpiTile label="Needs Attention" value={String(needsAttention.size)} sub="Tenants with a failure in the last 48h" onClick={needsAttention.size ? onNeedsAttention : undefined} />
+      <KpiTile label={`MTD — ${CURRENT_PERIOD}`} value={`${current.totalRuns.toLocaleString("en-IN")} runs`} sub={`${successRate(current)}% success so far this month`} />
+    </div>
+  );
+}
+
 export function AutomationPage({ go, openTenant, filter }) {
   const store = useStore();
   const [tab, setTab] = useState(filter?.tab || "Lead Routing");
+  const [pendingLogsFilter, setPendingLogsFilter] = useState(null); // { status, period } from a KPI click
   const [rules, setRules] = useState([
     { id: 1, name: "Auto-assign leads", trigger: "New lead", on: true }, { id: 2, name: "Idle lead nudge", trigger: "48h no contact", on: true },
     { id: 3, name: "Churn watch", trigger: "Health < 50", on: true }, { id: 4, name: "Renewal reminder", trigger: "30d before expiry", on: false },
   ]);
   const steps = [{ icon: Zap, t: "Trigger: New lead from CarWale", d: "Webhook received", tone: T.primary }, { icon: Bot, t: "AI: Summarize & score", d: "OpenAI enrichment", tone: T.purple }, { icon: Send, t: "Assign to telecaller", d: "Round-robin by brand", tone: T.success }];
+
+  const drillIntoLogs = (preset) => { setPendingLogsFilter(preset); setTab("Internal Ops Logs"); window.scrollTo(0, 0); };
+
   return (<>
     <PageHeader title="Automation Center" desc={tab === "Lead Routing" ? "Workflows, triggers and lead-routing rules" : tab === "Internal Ops" ? "LEDSAK's own tenant-state automations — not tenant-facing" : "Every trigger evaluation and action attempt — Internal Ops only"} />
+    <GlobalAutomationKpis onDrill={drillIntoLogs} onNeedsAttention={() => go?.("clients")} />
     <Tabs tabs={["Lead Routing", "Internal Ops", "Internal Ops Logs"]} value={tab} onChange={setTab} />
     {tab === "Lead Routing" && (
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
@@ -553,6 +628,14 @@ export function AutomationPage({ go, openTenant, filter }) {
       </div>
     )}
     {tab === "Internal Ops" && <OpsAutomationsSection />}
-    {tab === "Internal Ops Logs" && <AutomationLogsSection openTenant={openTenant} initialTenantFilter={filter?.tenant} />}
+    {tab === "Internal Ops Logs" && (
+      <AutomationLogsSection
+        key={pendingLogsFilter ? JSON.stringify(pendingLogsFilter) : "logs-default"}
+        openTenant={openTenant}
+        initialTenantFilter={filter?.tenant}
+        initialStatusFilter={pendingLogsFilter?.status}
+        initialPeriod={pendingLogsFilter?.period}
+      />
+    )}
   </>);
 }
